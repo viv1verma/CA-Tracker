@@ -1,0 +1,9 @@
+node_modules/
+/data/
+*.log
+.env
+.DS_Store
+check.js
+
+# Firebase project configuration (excluded from the public migration)
+mobile/google-services.json
