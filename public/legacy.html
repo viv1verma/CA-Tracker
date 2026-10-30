@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#1a56db"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="G A R P"/>
+<meta name="application-name" content="G A R P"/>
+<meta name="description" content="HRMS &amp; Assignment Tracker for G A R P &amp; Associates"/>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"/>
+<link rel="icon" type="image/svg+xml" href="/icon.svg"/>
+<title>G A R P</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lcard">
+    <div class="llogo">
+      <div class="llogo-icon"><span>G</span></div>
+      <h1>G A R P</h1>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">Greater Noida · Agra · Pune · Delhi · Indore</div>
+    </div>
+    <div class="lerr" id="lerr"></div>
+    <div class="linput-wrap">
+      <label>Username</label>
+      <input type="text" id="unIn" placeholder="Enter username" autocapitalize="none" autocomplete="username"/>
+    </div>
+    <div class="linput-wrap">
+      <label>Password</label>
+      <input type="password" id="pwIn" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="lbtn" onclick="doLogin()">Sign In →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Topbar -->
+  <div id="topbar">
+    <button class="t-menu" onclick="openDrawer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="t-title" id="tTitle">Dashboard</div>
+    <div style="flex:1;text-align:right;padding-right:8px;display:none" id="tUserInfo">
+      <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.9)" id="tUserName"></div>
+      <div style="font-size:9px;color:rgba(255,255,255,.7)" id="tUserDes"></div>
+    </div>
+    <div class="t-actions">
+      <button class="t-btn" onclick="openNotifPanel()" id="bellBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="t-badge" id="nbadge"></div>
+      </button>
+      <button class="t-logout" onclick="doLogout()">Out</button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex:1;overflow:hidden">
+    <!-- Desktop sidebar -->
+    <div class="desktop-sidebar" id="deskSidebar">
+      <div id="deskSideContent"></div>
+    </div>
+
+    <!-- Content -->
+    <div id="content">
+
+      <!-- DASHBOARD -->
+      <!-- ONE-TIME TASK DASHBOARD -->
+      <div class="page" id="pg-dashboard">
+        <div class="page-header">
+          <div><div class="page-title">One-Time Tasks</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn btn-sm" id="dashBulkDelBtn" style="display:none;background:#fef2f2;border:1.5px solid #fecaca;color:var(--red)" onclick="dashBulkDelete()">🗑 Delete (<span id="dashBulkCount">0</span>)</button>
+            <button class="btn btn-sm btn-outline" onclick="exportExcel()">📥</button>
+            <button class="btn btn-sm btn-outline" onclick="exportPDF()">📄</button>
+          </div>
+        </div>
+        <div class="page-body"><div id="ddrBan"></div>
+          <div id="statGrid" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none"></div>
+          <div id="overdueAlert" style="display:none;background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:10px 14px;margin-bottom:10px;cursor:pointer;font-size:12px;font-weight:800;color:var(--red)" onclick="showOverdueDetail()">
+            ⚠ <span id="overdueAlertText"></span> — tap to view
+          </div>
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:#f9fafb">
+              <span style="font-size:13px;font-weight:800">One-Time Assignments</span>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600">
+                  <input type="checkbox" id="dashSelectAll" onchange="dashToggleAll(this)"/> Select All
+                </label>
+                <select id="dashSortSel" onchange="dashSort=this.value;renderDashTable()" style="height:30px;padding:0 8px;font-size:11px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-weight:600;color:var(--text)"><option value="client">Client A-Z</option><option value="member">Member A-Z</option><option value="worktype">Work Type A-Z</option><option value="status">Status A-Z</option><option value="due">Due Date</option><option value="days">Oldest First</option><option value="pct">Progress %</option></select>
+                <input id="dashSearch" placeholder="Search…" oninput="renderDashTable()" style="height:30px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;width:120px;background:#fff"/>
+              </div>
+            </div>
+            <div style="display:flex;overflow-x:auto;border-bottom:1px solid var(--border);background:#fff;scrollbar-width:none">
+              <button class="dash-tab active" onclick="setDashTab('',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:700;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer">All</button>
+              <button class="dash-tab" onclick="setDashTab('Pending',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Pending</button>
+              <button class="dash-tab" onclick="setDashTab('In Progress',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">In Progress</button>
+              <button class="dash-tab" onclick="setDashTab('Completed',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Completed</button>
+              <button class="dash-tab" onclick="setDashTab('overdue',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--red);border-bottom:2px solid transparent;cursor:pointer">⚠ Overdue</button>
+            </div>
+            <div id="dashTable" style="overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+          </div>
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px">
+            <div style="padding:10px 14px;border-bottom:1px solid var(--border);background:#f9fafb;font-size:13px;font-weight:800">Team Workload</div>
+            <div id="workloadTable" style="overflow-x:auto"></div>
+          </div>
+          <div id="subSummaryCard"></div>
+        </div>
+      </div>
+
+      <div class="page" id="pg-punchstatus">
+        <div class="page-header">
+          <div><div class="page-title">Attendance</div><div class="page-sub" id="psDate"></div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="date" id="psDatePick" onchange="initPunchStatus()" style="height:36px;border:1.5px solid var(--border);border-radius:8px;padding:0 8px;font-size:12px;background:#fff"/>
+            <button class="btn btn-sm btn-outline" onclick="psSetToday()">Today</button>
+            <button class="btn btn-sm btn-outline" onclick="initPunchStatus()">⟳</button>
+          </div>
+        </div>
+        <div class="page-body">
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:800">🗓️ Day-wise Monthly Attendance Report</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <select id="arMonthSel" style="height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;background:#fff"></select>
+              <select id="arYearSel" style="height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;background:#fff"></select>
+              <button class="btn btn-sm btn-outline" onclick="viewAttendanceReport('ar')">👁 Preview</button>
+              <button class="btn btn-sm btn-primary" onclick="downloadAttendanceReport('ar')">⬇ Download Excel</button>
+            </div>
+            <div id="arReportView" style="margin-top:12px"></div>
+          </div>
+          <div id="psStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px"></div>
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden">
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead><tr style="background:#f9fafb;border-bottom:1px solid var(--border)">
+                  <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:800;color:var(--muted)">EMPLOYEE</th>
+                  <th style="padding:11px 10px;font-size:10px;font-weight:800;color:var(--muted)">PUNCH IN</th>
+                  <th style="padding:11px 10px;font-size:10px;font-weight:800;color:var(--muted)">PUNCH OUT</th>
+                  <th style="padding:11px 10px;font-size:10px;font-weight:800;color:var(--muted)">HOURS</th>
+                  <th style="padding:11px 10px;font-size:10px;font-weight:800;color:var(--muted)">STATUS</th>
+                  <th style="padding:11px 10px;font-size:10px;font-weight:800;color:var(--muted)">REMARK</th>
+                  <th style="padding:11px 10px;font-size:10px;font-weight:800;color:var(--muted)" id="psActionsHdr">EDIT</th>
+                </tr></thead>
+                <tbody id="psBody"><tr><td colspan="7" style="padding:28px;text-align:center;color:var(--muted)">Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEMBER ATTENDANCE (Punch In/Out + My History + Leaves) -->
+      <div class="page" id="pg-attendance">
+        <div class="page-header">
+          <div><div class="page-title">Attendance</div><div class="page-sub" id="punchGreet"></div></div>
+        </div>
+        <div class="page-body">
+
+          <div id="attnAlert" style="display:none;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:12px 14px;margin-bottom:14px;align-items:center;gap:10px">
+            <span style="font-size:20px">⏰</span>
+            <div style="flex:1"><div style="font-size:13px;font-weight:800;color:#991b1b">Attendance not marked</div><div style="font-size:11px;color:#b91c1c">It's past 10:00 AM. Please punch in or apply for leave.</div></div>
+          </div>
+
+          <!-- Punch card -->
+          <div style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:18px 16px;margin-bottom:14px;text-align:center">
+            <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px" id="punchDate"></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+              <div style="background:#f0fdf4;border-radius:12px;padding:12px 6px">
+                <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">PUNCH IN</div>
+                <div style="font-size:18px;font-weight:900;color:var(--green)" id="punchInTime">—</div>
+              </div>
+              <div style="background:#fef2f2;border-radius:12px;padding:12px 6px">
+                <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">PUNCH OUT</div>
+                <div style="font-size:18px;font-weight:900;color:var(--red)" id="punchOutTime">—</div>
+              </div>
+              <div style="background:#eff6ff;border-radius:12px;padding:12px 6px">
+                <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">HOURS</div>
+                <div style="font-size:18px;font-weight:900;color:var(--primary)" id="punchHours">—</div>
+              </div>
+            </div>
+            <div id="punchTabs" style="display:flex;gap:0;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:12px">
+              <button id="punchTabIn" onclick="switchPunchTab('in')" style="flex:1;height:42px;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;background:#fff;color:var(--green);box-shadow:0 1px 3px rgba(0,0,0,.08);transition:all .15s">🟢 Punch In</button>
+              <button id="punchTabOut" onclick="switchPunchTab('out')" style="flex:1;height:42px;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;background:transparent;color:var(--muted);transition:all .15s">🔴 Punch Out</button>
+            </div>
+            <div id="punchTabPanelIn">
+              <button class="btn btn-primary" id="punchInBtn" onclick="doPunchIn()" style="width:100%;font-size:16px;padding:14px">🟢 Punch In Now</button>
+              <div id="punchInMsg" style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;display:none"></div>
+            </div>
+            <div id="punchTabPanelOut" style="display:none">
+              <button class="btn" id="punchOutBtn" onclick="doPunchOut()" style="width:100%;font-size:16px;padding:14px;background:var(--red);color:#fff">🔴 Punch Out Now</button>
+              <div id="punchOutMsg" style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;display:none"></div>
+            </div>
+            <button class="btn btn-outline" onclick="openSiteVisitManual()" style="width:100%;font-size:14px;padding:11px;margin-top:8px">🗺 Log Site Visit</button>
+          </div>
+
+          <!-- Leave balance -->
+          <div style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:14px 16px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:14px;font-weight:800">Leave Balance</div>
+              <button class="btn btn-sm btn-outline" onclick="openLeaveSheet()">+ Apply Leave</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
+              <div><div style="font-size:20px;font-weight:900;color:var(--primary)" id="balAccrued">0</div><div style="font-size:10px;color:var(--muted);font-weight:700">ACCRUED</div></div>
+              <div><div style="font-size:20px;font-weight:900;color:var(--amber)" id="balUsed">0</div><div style="font-size:10px;color:var(--muted);font-weight:700">USED</div></div>
+              <div><div style="font-size:20px;font-weight:900;color:var(--green)" id="balRemaining">0</div><div style="font-size:10px;color:var(--muted);font-weight:700">REMAINING</div></div>
+            </div>
+          </div>
+
+          <!-- My attendance history -->
+          <div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px">
+            <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:#fafafa;flex-wrap:wrap;gap:8px">
+              <div style="font-size:14px;font-weight:800">My Attendance</div>
+              <div style="display:flex;gap:6px">
+                <select id="attMonthSel" onchange="loadMyAttendance()" style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border)"></select>
+                <select id="attYearSel" onchange="loadMyAttendance()" style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border)"></select>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead><tr style="background:#f9fafb;border-bottom:1px solid var(--border)">
+                  <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:800;color:var(--muted)">DATE</th>
+                  <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted)">STATUS</th>
+                  <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted)">IN</th>
+                  <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted)">OUT</th>
+                  <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted)">HRS</th>
+                  <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted)">NOTE</th>
+                </tr></thead>
+                <tbody id="myAttTbody"><tr><td colspan="6" style="padding:24px;text-align:center;color:var(--muted)">Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- My leave requests -->
+          <div style="background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden">
+            <div style="padding:12px 16px;font-size:14px;font-weight:800;border-bottom:1px solid var(--border);background:#fafafa">My Leave Requests</div>
+            <div id="myLeaveList"><div style="padding:16px;text-align:center;font-size:12px;color:var(--muted)">Loading...</div></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CLIENT PORTAL (client role only) -->
+      <div class="page" id="pg-clientportal">
+        <div class="page-header">
+          <div><div class="page-title">My Tasks</div><div class="page-sub" id="cpSub">Tasks GARP is handling for you</div></div>
+          <button class="btn btn-sm btn-outline" onclick="renderClientPortal()">⟳ Refresh</button>
+        </div>
+        <div class="page-body">
+          <div id="cpCompanyWrap"></div>
+          <div id="cpStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px"></div>
+          <div id="cpList"><div style="padding:24px;text-align:center;color:var(--muted)">Loading...</div></div>
+        </div>
+      </div>
+
+      <!-- CLIENT BILLING & PAYMENTS DASHBOARD -->
+      <div class="page" id="pg-clientbilling">
+        <div class="page-header">
+          <div><div class="page-title">Billing & Payments</div><div class="page-sub">Your invoice & collection dashboards</div></div>
+          <button class="btn btn-sm btn-outline" onclick="renderClientBilling()">⟳ Refresh</button>
+        </div>
+        <div class="page-body">
+          <div id="cbContent"><div style="padding:24px;text-align:center;color:var(--muted)">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- CLIENT COMPLIANCE DASHBOARD -->
+      <div class="page" id="pg-clientcompliance">
+        <div class="page-header">
+          <div><div class="page-title">Compliance Calendar</div><div class="page-sub">Month-wise statutory compliance status</div></div>
+          <button class="btn btn-sm btn-outline" onclick="renderCompliance()">⟳ Refresh</button>
+        </div>
+        <div class="page-body">
+          <div id="compContent"><div style="padding:24px;text-align:center;color:var(--muted)">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- RECURRING TASK DASHBOARD -->
+      <div class="page" id="pg-recdash">
+        <div class="page-header">
+          <div><div class="page-title">Recurring Tasks</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn btn-sm btn-outline" id="recCleanupBtn" onclick="recCleanupMismatches()" style="font-size:11px">🧹 Clean Up Mismatches</button>
+            <button class="btn btn-sm" id="recDashBulkDelBtn" style="display:none;background:#fef2f2;border:1.5px solid #fecaca;color:var(--red)" onclick="recDashBulkDelete()">🗑 Delete (<span id="recDashBulkCount">0</span>)</button>
+          </div>
+        </div>
+        <div class="page-body"><div style="display:flex;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:12px"><button id="rdT1" onclick="rdSwitch('tasks')" style="flex:1;height:32px;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary);color:#fff">Tasks</button><button id="rdT2" onclick="rdSwitch('setup')" style="flex:1;height:32px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted)">Setup</button></div><div id="rdTasksWrap">
+          <div id="recDashStatGrid" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none"></div>
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:#f9fafb">
+              <span style="font-size:13px;font-weight:800">Recurring Assignments</span>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600">
+                  <input type="checkbox" id="recDashSelectAll" onchange="recDashToggleAll(this)"/> Select All
+                </label>
+                <select id="recDashSortSel" onchange="recDashSort=this.value;renderRecDashTable()" style="height:30px;padding:0 8px;font-size:11px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-weight:600;color:var(--text)"><option value="client">Client A-Z</option><option value="member">Member A-Z</option><option value="worktype">Work Type A-Z</option><option value="status">Status A-Z</option><option value="due">Due Date</option><option value="days">Oldest First</option><option value="pct">Progress %</option></select>
+                <input id="recDashSearch" placeholder="Search…" oninput="renderRecDashTable()" style="height:30px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;width:120px;background:#fff"/>
+              </div>
+            </div>
+            <div style="display:flex;overflow-x:auto;border-bottom:1px solid var(--border);background:#fff;scrollbar-width:none">
+              <button class="rec-dash-tab active" onclick="setRecDashTab('',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:700;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer">All</button>
+              <button class="rec-dash-tab" onclick="setRecDashTab('Pending',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Pending</button>
+              <button class="rec-dash-tab" onclick="setRecDashTab('In Progress',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">In Progress</button>
+              <button class="rec-dash-tab" onclick="setRecDashTab('Completed',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Completed</button>
+              <button class="rec-dash-tab" onclick="setRecDashTab('overdue',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--red);border-bottom:2px solid transparent;cursor:pointer">⚠ Overdue</button>
+            </div>
+            <div id="recDashTable" style="overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+          </div>
+</div><div id="rdSetupWrap" style="display:none"><div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden"><div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);background:#f9fafb"><span style="font-size:13px;font-weight:800">Recurring Templates</span><button class="btn btn-sm btn-primary" onclick="openRecSheet()">+ Add</button></div><div id="rdSetupBody"></div></div></div>        </div>
+      </div>
+
+      <!-- ASSIGNMENTS -->
+      <div class="page" id="pg-assignments">
+        <div class="page-header">
+          <div><div class="page-title">Assignments</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-outline" id="bulkDelBtn" style="display:none;background:#fef2f2;border-color:#fecaca;color:var(--red)" onclick="bulkDelete()">🗑 Delete (<span id="bulkCount">0</span>)</button>
+            <button class="btn btn-sm btn-outline" onclick="exportPDF()">📄</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;padding:0 16px 8px;flex-wrap:wrap">
+          <div style="position:relative;flex:1;min-width:180px">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none">🔍</span>
+            <input class="search-input" id="asrch" placeholder="Search…" oninput="renderAssignments()" style="padding-left:32px"/>
+          </div>
+          <select id="afMem" onchange="renderAssignments()" style="height:44px;padding:0 10px;font-size:13px;border:1.5px solid var(--border);border-radius:12px;background:#fff;min-width:120px"><option value="">All Members</option></select>
+          <select id="assignSortSel" onchange="assignSort=this.value;renderAssignments()" style="height:44px;padding:0 10px;font-size:13px;border:1.5px solid var(--border);border-radius:12px;background:#fff">
+            <option value="client">Client A-Z</option>
+            <option value="member">Member A-Z</option>
+            <option value="worktype">Work Type A-Z</option>
+            <option value="status">Status A-Z</option>
+            <option value="due">Due Date</option>
+            <option value="days">Oldest First</option>
+            <option value="pct">Progress %</option>
+          </select>
+        </div>
+        <div class="filter-bar" id="assignFilters" style="padding-bottom:8px">
+          <button class="filter-chip active" onclick="setFilter('',this)">All</button>
+          <button class="filter-chip" onclick="setFilter('Pending',this)">⏳ Pending</button>
+          <button class="filter-chip" onclick="setFilter('In Progress',this)">🔵 In Progress</button>
+          <button class="filter-chip" onclick="setFilter('Under Review',this)">🔷 Review</button>
+          <button class="filter-chip" onclick="setFilter('Completed',this)">✅ Done</button>
+          <button class="filter-chip" onclick="setFilter('On Hold',this)">⏸ Hold</button>
+        </div>
+        <div class="page-body">
+          <!-- Compact table -->
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden">
+            <div id="assignTableWrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+              <table id="assignTable" style="width:100%;border-collapse:collapse;font-size:12px;min-width:520px">
+                <thead>
+                  <tr style="background:#f9fafb;border-bottom:1px solid var(--border)">
+                    <th style="padding:8px 10px;text-align:left;width:32px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary)"/></th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Client</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Work</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Member</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Status</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">%</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Due</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Completed</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Days</th>
+                    <th style="padding:8px 6px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;white-space:nowrap">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="assignTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENTS -->
+      <div class="page" id="pg-clients">
+        <div class="page-header">
+          <div><div class="page-title">Clients</div><div class="page-sub" id="clientCount">0 clients</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn btn-outline btn-sm" onclick="openGroupsSheet()" style="height:36px">👥 Groups</button>
+            <input id="clientSearch" placeholder="🔍 Search…" oninput="renderClients()" style="height:36px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:10px;width:140px;background:#fff"/>
+          </div>
+        </div>
+        <div class="page-body">
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden">
+            <div style="padding:8px 14px;border-bottom:1px solid var(--border);background:#f9fafb;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:12px;font-weight:700;color:var(--muted)">Sort:</span>
+              <select id="clientSortSel" onchange="clientSort=this.value;renderClients()" style="height:30px;padding:0 8px;font-size:11px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-weight:600">
+                <option value="name">Name A-Z</option>
+                <option value="type">Type A-Z</option>
+                <option value="city">City A-Z</option>
+                <option value="tasks">Most Tasks</option>
+                <option value="pending">Most Pending</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+              <table style="border-collapse:collapse;font-size:12px;width:auto">
+                <thead>
+                  <tr style="background:#f9fafb;border-bottom:1px solid var(--border)">
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Client Name</th>
+                    <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Type</th>
+                    <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">PAN</th>
+                    <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">GSTIN</th>
+                    <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">City</th>
+                    <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Tasks</th>
+                    <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:800;color:var(--amber);text-transform:uppercase">Pend</th>
+                    <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:800;color:var(--purple);text-transform:uppercase">WIP</th>
+                    <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:800;color:var(--green);text-transform:uppercase">Done</th>
+                    <th style="padding:10px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="clientTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEAM -->
+      <div class="page" id="pg-team">
+        <div class="page-header">
+          <div><div class="page-title">Team Members</div><div class="page-sub" id="tmSub"></div></div>
+          <button class="btn btn-sm btn-primary" onclick="openUserSheet()">+ Add</button>
+        </div>
+        <div class="page-body">
+          <div id="tmStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px"></div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <input id="tmSearch" placeholder="Search name, role, branch..." oninput="renderTeam()"
+              style="flex:1;min-width:140px;height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:13px;background:#fff">
+            <select id="tmBranch" onchange="renderTeam()"
+              style="height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:12px;background:#fff">
+              <option value="">All Branches</option>
+            </select>
+            <select id="tmQual" onchange="renderTeam()"
+              style="height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:12px;background:#fff">
+              <option value="">All Quals</option>
+              <option>CA</option><option>CS</option><option>CMA</option><option>B.Com</option><option>MBA</option>
+            </select>
+            <select id="tmSort" onchange="renderTeam()"
+              style="height:40px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:12px;background:#fff">
+              <option value="name">A → Z</option>
+              <option value="tasks">Total Tasks</option>
+              <option value="pending">Pending First</option>
+              <option value="joining">Joining Date</option>
+            </select>
+          </div>
+          <div id="tmTable"></div>
+        </div>
+      </div>
+
+      <div class="page" id="pg-salary">
+        <div class="page-header">
+          <div><div class="page-title">💰 Salary</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-outline" onclick="exportSalaryExcel()">📥 Excel</button>
+          </div>
+        </div>
+        <div class="page-body">
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <select id="salMonthSel" style="flex:1;height:44px;border:1.5px solid var(--border);border-radius:12px;padding:0 12px;font-size:14px;background:#fff"></select>
+            <select id="salYearSel" style="flex:1;height:44px;border:1.5px solid var(--border);border-radius:12px;padding:0 12px;font-size:14px;background:#fff"></select>
+            <select id="salBranchSel" style="flex:1;height:44px;border:1.5px solid var(--border);border-radius:12px;padding:0 12px;font-size:14px;background:#fff">
+              <option value="">All Branches</option>
+              <option>Greater Noida (HO)</option><option>Agra (BO)</option><option>Pune (BO)</option><option>Delhi (BO)</option><option>Indore (BO)</option>
+            </select>
+            <button class="btn btn-primary btn-full" onclick="loadSalarySheet()">Generate Salary Sheet</button>
+          </div>
+          <div id="salaryEmailStatus" style="margin-bottom:10px"></div>
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:800">🗓️ Monthly Attendance Report</div>
+              <button class="btn btn-sm btn-primary" onclick="downloadAttendanceReport()">⬇ Download Excel</button>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Full day-by-day attendance for all employees. Uses the month/year selected above.</div>
+            <button class="btn btn-sm btn-outline" onclick="viewAttendanceReport()">👁 Preview on screen</button>
+            <div id="attReportView" style="margin-top:12px"></div>
+          </div>
+          <div id="salaryContent"></div>
+        </div>
+      </div>
+
+      <div class="page" id="pg-password">
+        <div class="page-header"><div class="page-title">Settings</div></div>
+        <div class="page-body">
+          <div style="display:flex;gap:6px;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:14px;overflow-x:auto">
+            <button id="stTabAcc" class="st-tab" onclick="setSettingsTab('account')" style="flex:1;min-width:110px;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary);color:#fff">🔑 Account</button>
+            <button id="stTabRules" class="st-tab" onclick="setSettingsTab('rules')" style="flex:1;min-width:110px;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted)">📋 Rules</button>
+            <button id="stTabOffice" class="st-tab" onclick="setSettingsTab('office')" style="flex:1;min-width:110px;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);display:none">⚙ Office</button>
+          </div>
+
+          <!-- ══ RULES TAB ══ -->
+          <div id="stRules" style="display:none">
+            <div id="rulesBanner" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 12px;font-size:12px;color:#1e40af;margin-bottom:12px"></div>
+            <div id="rulesBody"></div>
+          </div>
+
+          <!-- ══ ACCOUNT TAB ══ -->
+          <div id="stAccount">
+          <div class="card" style="padding:16px;margin-bottom:12px">
+            <div class="field"><label>Current Password</label><input type="password" id="pwCur" placeholder="Current password"/></div>
+            <div class="field"><label>New Password</label><input type="password" id="pwNew" placeholder="Min 6 characters"/></div>
+            <div class="field"><label>Confirm Password</label><input type="password" id="pwCon" placeholder="Repeat new password"/></div>
+            <button class="btn btn-primary btn-full" onclick="changePassword()">Update Password</button>
+          </div>
+          <div class="card" style="padding:16px">
+            <div style="font-size:14px;font-weight:800;margin-bottom:10px">🔔 Push Notifications</div>
+            <div style="background:#eff6ff;border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:#1e40af;line-height:1.7">
+              <strong>Android (Chrome):</strong> Tap Enable below → Allow when asked<br>
+              <strong>iPhone:</strong> First tap Share → "Add to Home Screen" → Open from home screen → Then tap Enable
+            </div>
+            <button class="btn btn-primary btn-full" onclick="setupPushNotifications()" style="margin-bottom:8px">📲 Enable Notifications on This Device</button>
+            <button class="btn btn-outline btn-full" onclick="testPushNotification()">🧪 Send Test Notification</button>
+            <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">
+              Notifications show on lock screen when app is closed
+            </div>
+          </div>
+          </div><!-- /stAccount -->
+
+          <!-- ══ OFFICE TAB (admin) ══ -->
+          <div id="stOffice" style="display:none">
+          <div id="backupSection" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Data Backup & Restore</div>
+            <div class="card" style="padding:14px;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:800;margin-bottom:4px">💾 Backup</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Download a complete copy of all your data (users, clients, tasks, invoices). Keep it somewhere safe — this is your safety net if anything goes wrong. Do this regularly.</div>
+              <button class="btn btn-primary btn-sm" onclick="downloadBackup()">⬇ Download Backup</button>
+            </div>
+            <div class="card" style="padding:14px;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:800;margin-bottom:4px">♻️ Restore</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Restore from a previously downloaded backup file. <b>This replaces all current data.</b> A snapshot of the current data is saved first, just in case.</div>
+              <input type="file" id="restoreFile" accept=".json" style="font-size:12px;margin-bottom:8px"/>
+              <button class="btn btn-outline btn-sm" onclick="doRestore()">Restore from File</button>
+              <div id="restoreStatus" style="font-size:12px;margin-top:8px"></div>
+            </div>
+          </div>
+
+          <div id="officeSettingsSection" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Office Settings</div>
+            <div class="card" style="padding:14px;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:800;margin-bottom:4px">📱 Mobile-Only Punch</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Restrict punch-in/out to smartphones only.</div>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" id="chkMobile" onchange="saveSetting('mobileOnlyPunch',this.checked)">
+                <span style="font-size:13px;font-weight:600">Enable Mobile-Only Punch</span>
+              </label>
+            </div>
+            <div class="card" style="padding:14px">
+              <div style="font-size:14px;font-weight:800;margin-bottom:4px">📶 Office WiFi Lock</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Only allow punch from office WiFi IPs.</div>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px">
+                <input type="checkbox" id="chkWifi" onchange="saveSetting('wifiCheckEnabled',this.checked)">
+                <span style="font-size:13px;font-weight:600">Enable WiFi Lock</span>
+              </label>
+              <div class="field">
+                <label>Office IP Prefixes (one per line)</label>
+                <textarea id="txtIPs" rows="3" placeholder="192.168.1&#10;10.0.0"></textarea>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn btn-outline" style="flex:1" onclick="showMyIP()">📍 Show My IP</button>
+                <button class="btn btn-primary" style="flex:1" onclick="saveIPs()">Save WiFi Settings</button>
+              </div>
+              <div id="myIpResult" style="display:none;margin-top:10px;padding:10px 12px;background:#eff6ff;border-radius:10px;font-size:12px"></div>
+            </div>
+
+            <!-- HOLIDAYS -->
+            <div class="card" style="padding:14px;margin-top:10px">
+              <div style="font-size:14px;font-weight:800;margin-bottom:4px">🗓️ Holidays</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+                Sundays and the <b>2nd &amp; 4th Saturday</b> are fixed holidays. Tick the festival / government holidays GARP will observe.
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+                <label style="font-size:11px;font-weight:800;color:var(--muted)">YEAR</label>
+                <select id="holYear" onchange="loadHolidays()" style="height:34px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff"></select>
+                <span id="holCount" style="font-size:11px;color:var(--muted);font-weight:700"></span>
+                <button class="btn btn-sm btn-primary" style="margin-left:auto;height:34px" onclick="saveHolidays()">Save Marked Holidays</button>
+              </div>
+              <div id="holCatalog" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
+
+              <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)">
+                <div style="font-size:12px;font-weight:800;margin-bottom:8px">➕ Add Other Holiday</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                  <div style="flex:0 0 150px"><label style="font-size:10px;color:var(--muted);font-weight:700">DATE</label><input type="date" id="holNewDate" style="width:100%;height:38px;border:1px solid var(--border);border-radius:8px;padding:0 8px"></div>
+                  <div style="flex:1;min-width:150px"><label style="font-size:10px;color:var(--muted);font-weight:700">NAME</label><input type="text" id="holNewName" placeholder="e.g. Firm Foundation Day" style="width:100%;height:38px;border:1px solid var(--border);border-radius:8px;padding:0 8px;box-sizing:border-box"></div>
+                  <button class="btn btn-sm btn-outline" style="height:38px" onclick="addCustomHoliday()">Add</button>
+                </div>
+                <div id="holCustom" style="margin-top:10px"></div>
+              </div>
+            </div>
+
+          </div>
+          </div><!-- /stOffice -->
+        </div>
+      </div>
+
+      <!-- FIRM PROFILE (own dashboard) -->
+      <div class="page" id="pg-firmprofile">
+        <div class="page-header">
+          <div><div class="page-title">🏛 Firm Profile</div><div class="page-sub">ICAI details &amp; tender-eligibility credentials</div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-sm btn-outline" onclick="pickCard('firm')" style="height:34px">⬆ Import Firm Card</button>
+            <button class="btn btn-sm btn-outline" onclick="pickCard('member')" style="height:34px">⬆ Import Member Card</button>
+          </div>
+        </div>
+        <input type="file" id="cardFile" accept="application/pdf" style="display:none" onchange="onCardPicked(this)">
+        <div class="page-body">
+          <div id="fpBanner" style="display:none;background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:12px"></div>
+
+          <div class="card" style="padding:14px;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">Firm Details</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="field"><label>Firm Name</label><input id="fpName" type="text"></div>
+              <div class="field"><label>Date of Constitution</label><input id="fpConst" type="date"></div>
+              <div class="field"><label>Years of Experience</label><input id="fpExp" type="number" min="0" placeholder="0"></div>
+              <div class="field"><label>Total Partners</label><input id="fpPart" type="number" min="0" placeholder="0"></div>
+              <div class="field"><label>FCA Partners</label><input id="fpFca" type="number" min="0" placeholder="0"></div>
+              <div class="field"><label>CA Employees</label><input id="fpCaEmp" type="number" min="0" placeholder="0"></div>
+              <div class="field"><label>Total Staff</label><input id="fpStaff" type="number" min="0" placeholder="0"></div>
+            </div>
+            <div style="font-size:11px;font-weight:800;color:var(--muted);margin:8px 0 4px">REGISTRATION NUMBERS</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="field"><label>Firm Registration No. (FRN)</label><input id="fpFrn" type="text" placeholder="e.g. 136616W" style="text-transform:uppercase"></div>
+              <div class="field"><label>PAN</label><input id="fpPan" type="text" placeholder="e.g. AAAFG1234A" maxlength="10" style="text-transform:uppercase"></div>
+              <div class="field"><label>GSTIN</label><input id="fpGstin" type="text" placeholder="e.g. 09AAAFG1234A1Z5" maxlength="15" style="text-transform:uppercase"></div>
+              <div class="field"><label>MSME / Udyam Reg. No.</label><input id="fpMsme" type="text" placeholder="e.g. UDYAM-UP-00-0000000" style="text-transform:uppercase"></div>
+            </div>
+            <div id="fpRegWarn" style="font-size:10px;color:#92400e;margin-bottom:6px"></div>
+            <div style="font-size:11px;font-weight:800;color:var(--muted);margin:8px 0 4px">TURNOVER — LAST 3 FINANCIAL YEARS (₹)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+              <div class="field"><label>Latest FY</label><input id="fpT1" type="number" min="0" placeholder="0"></div>
+              <div class="field"><label>Previous FY</label><input id="fpT2" type="number" min="0" placeholder="0"></div>
+              <div class="field"><label>FY before</label><input id="fpT3" type="number" min="0" placeholder="0"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+              <div class="field"><label>Peer Review Valid Till</label><input id="fpPeerTill" type="date"></div>
+              <div class="field"><label>CAG Category</label><select id="fpCagCat"><option value="">—</option><option>I</option><option>II</option><option>III</option><option>IV</option></select></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;margin:8px 0">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="fpPeer" style="width:15px;height:15px;accent-color:var(--primary)"> Peer Review certificate</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="fpCag" style="width:15px;height:15px;accent-color:var(--primary)"> CAG empanelled</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="fpRbi" style="width:15px;height:15px;accent-color:var(--primary)"> RBI empanelled</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="fpGem" style="width:15px;height:15px;accent-color:var(--primary)"> GeM registered</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="fpPsu" style="width:15px;height:15px;accent-color:var(--primary)"> PSU audit experience</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="fpBank" style="width:15px;height:15px;accent-color:var(--primary)"> Bank audit experience</label>
+            </div>
+            <div class="field"><label>States we can serve (one per line or comma separated)</label><textarea id="fpStates" rows="2" placeholder="Uttar Pradesh&#10;Delhi"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="field"><label>Default partner for imported tenders</label><select id="fpPartner"></select></div>
+              <div class="field"><label>&nbsp;</label>
+                <label style="display:flex;align-items:center;gap:8px;height:44px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" id="fpAutoSync" style="width:15px;height:15px;accent-color:var(--primary)"> Hourly auto-sync of ICAI tenders</label>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+              <button class="btn btn-primary" style="flex:1" onclick="saveFirmProfile()">Save Firm Profile</button>
+              <button class="btn btn-outline" onclick="tenderSyncNow()">⟳ Sync tenders now</button>
+            </div>
+            <div id="fpSyncStatus" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
+          </div>
+
+          <div class="card" style="padding:14px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-size:13px;font-weight:800">Partners &amp; Members</div>
+              <span id="fpMemCount" style="font-size:11px;color:var(--muted);font-weight:700"></span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Imported from the ICAI Firm Card. Partner and FCA counts above are kept in step with this list.</div>
+            <div id="fpMembers" style="overflow-x:auto"></div>
+          </div>
+
+          <div class="card" style="padding:14px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <div style="font-size:13px;font-weight:800">🧾 Audit Experience</div>
+              <button class="btn btn-sm btn-primary" onclick="openExpForm()">+ Add experience</button>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Record each engagement client-wise. Tenders that ask for “similar work”, “PSU experience”, “internal audit of a PSU” or “N years bank concurrent audit” are matched automatically against this list.</div>
+            <div id="fpExpSummary" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
+            <div id="fpExp" style="overflow-x:auto"></div>
+          </div>
+
+          <div class="card" style="padding:14px">
+            <div style="font-size:13px;font-weight:800;margin-bottom:8px">Card Import History</div>
+            <div id="fpHistory" style="font-size:12px;color:var(--muted)">No cards imported yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDIT EXPERIENCE ADD/EDIT SHEET -->
+      <div class="sheet-overlay" id="expOvl" onclick="closeSheet('expSheet','expOvl')"></div>
+      <div class="sheet" id="expSheet" style="max-width:640px">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header"><div class="sheet-title" id="expTitle">Add Audit Experience</div></div>
+        <div class="sheet-body">
+          <input type="hidden" id="expId">
+          <div class="field"><label>Client / Auditee name *</label><input id="expClient" placeholder="e.g. Bank of Maharashtra – Pune Zone"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label>Client type</label><select id="expClientType"></select></div>
+            <div class="field"><label>Assignment type</label><select id="expAssignType"></select></div>
+          </div>
+          <div class="field"><label>Sector / nature (optional)</label><input id="expSector" placeholder="e.g. Banking – credit dispensation"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label>From date</label><input id="expFrom" type="date"></div>
+            <div class="field"><label>To date</label><input id="expTo" type="date"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:8px"><input type="checkbox" id="expOngoing" style="width:15px;height:15px;accent-color:var(--primary)" onchange="document.getElementById('expTo').disabled=this.checked"> Ongoing (still auditing)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label>Fee / assignment value ₹ (optional)</label><input id="expFee" type="number" min="0" placeholder="0"></div>
+            <div class="field"><label>Work order / ref no (optional)</label><input id="expRef" placeholder=""></div>
+          </div>
+          <div class="field"><label>Remarks (optional)</label><textarea id="expRemarks" rows="2"></textarea></div>
+        </div>
+        <div class="sheet-footer">
+          <button class="btn btn-outline" style="flex:1" onclick="closeSheet('expSheet','expOvl')">Cancel</button>
+          <button class="btn btn-primary" style="flex:2" onclick="saveExp()" id="expSaveBtn">Save</button>
+        </div>
+      </div>
+
+      <!-- CARD IMPORT REVIEW SHEET -->
+      <div class="sheet-overlay" id="cardOvl" onclick="closeSheet('cardSheet','cardOvl')"></div>
+      <div class="sheet" id="cardSheet" style="max-width:700px">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header"><div class="sheet-title" id="cardTitle">Review Card Import</div></div>
+        <div class="sheet-body" id="cardBody"></div>
+        <div class="sheet-footer">
+          <button class="btn btn-outline" style="flex:1" onclick="closeSheet('cardSheet','cardOvl')">Cancel</button>
+          <button class="btn btn-primary" style="flex:2" onclick="applyCard()" id="cardApplyBtn">Apply Changes</button>
+        </div>
+      </div>
+
+      <div class="page" id="pg-approvals">
+        <div class="page-header"><div><div class="page-title">✅ Pending Approvals</div><div class="page-sub">Review and action all pending requests</div></div></div>
+        <div id="approvalsArea"></div>
+      </div>
+
+      <div class="page" id="pg-myleave">
+        <div class="page-header"><div><div class="page-title">🌴 My Leave</div><div class="page-sub">Apply for leave and track approvals</div></div>
+          <button class="btn btn-sm btn-primary" onclick="openLeaveForm()">+ Apply Leave</button></div>
+        <div id="myLeaveArea"></div>
+      </div>
+
+      <div class="page" id="pg-itrdash">
+        <div class="page-header">
+          <div><div class="page-title">🧾 ITR Filing Tracker</div><div class="page-sub">Income-tax return filing — separate from clients & tasks</div></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="itrAyFilter" onchange="renderItrDash()" style="height:34px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff"><option value="all">All AY</option></select>
+            <select id="itrStageFilter" onchange="renderItrDash()" style="height:34px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff"><option value="all">All Stages</option></select>
+            <button class="btn btn-sm btn-outline" onclick="openItrUpload()" style="height:34px">⬆ Upload List</button>
+            <button class="btn btn-sm btn-outline" onclick="downloadItrTemplate()" style="height:34px">⬇ Template</button>
+            <button class="btn btn-sm btn-outline" onclick="exportItr('xlsx')" style="height:34px">📊 Excel</button>
+            <button class="btn btn-sm btn-outline" onclick="exportItr('pdf')" style="height:34px">📄 PDF</button>
+          </div>
+        </div>
+        <div id="itrStats" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px"></div>
+        <div id="itrTabs" style="display:flex;gap:6px;margin-bottom:12px;border-bottom:2px solid var(--border)"></div>
+        <div id="itrTableArea"></div>
+      </div>
+
+      <div class="page" id="pg-bizdev">
+        <div class="page-header">
+          <div><div class="page-title">📈 Business Development</div><div class="page-sub">Track leads &amp; tenders — visible to partners &amp; admin</div></div>
+        </div>
+        <div class="page-body">
+          <!-- Top-level tabs: Private Companies / Government Tenders -->
+          <div style="display:flex;gap:6px;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:14px">
+            <button id="bdTabPvt" class="bd-tab" onclick="setBdTab('private',this)" style="flex:1;height:38px;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary);color:#fff">🏢 Private Companies</button>
+            <button id="bdTabGov" class="bd-tab" onclick="setBdTab('govt',this)" style="flex:1;height:38px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted)">🏛 Government Tenders</button>
+          </div>
+
+          <!-- PRIVATE COMPANIES -->
+          <div id="bdPrivateSec">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-bottom:12px">
+              <select id="bdStatusFilter" onchange="renderBizDev()" style="height:34px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff"><option value="all">All Statuses</option></select>
+              <button class="btn btn-sm btn-primary" onclick="openAddLead()" style="height:34px">+ Add Lead</button>
+            </div>
+            <div id="bdStats" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px"></div>
+            <div id="bdTableArea"></div>
+          </div>
+
+          <!-- GOVERNMENT TENDERS -->
+          <div id="bdGovSec" style="display:none">
+            <div style="display:flex;gap:6px;background:#eef2ff;border-radius:10px;padding:3px;margin-bottom:12px">
+              <button id="tdTabPsuCo" class="td-tab" onclick="setTdTab('psu_company',this)" style="flex:1;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary);color:#fff">🏭 PSU Companies</button>
+              <button id="tdTabPsuBank" class="td-tab" onclick="setTdTab('psu_bank',this)" style="flex:1;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted)">🏦 PSU Banks</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-bottom:12px">
+              <select id="tdStatusFilter" onchange="renderTenders()" style="height:34px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff"><option value="all">All Statuses</option></select>
+              <select id="tdEligFilter" onchange="renderTenders()" style="height:34px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff">
+                <option value="all">All Eligibility</option>
+                <option value="Eligible">✅ Eligible</option>
+                <option value="Not Eligible">⛔ Not Eligible</option>
+                <option value="Needs Review">🔍 Needs Review</option>
+                <option value="unread">— Not read yet</option>
+              </select>
+              <button class="btn btn-sm btn-outline" id="tdBulkDelBtn" onclick="bulkDeleteTenders()" style="height:34px;display:none;background:#fef2f2;border-color:#fecaca;color:var(--red)">🗑 Delete (<span id="tdSelCount">0</span>)</button>
+              <button class="btn btn-sm btn-outline" onclick="readAllTenders()" style="height:34px" title="Read every imported tender PDF and re-check eligibility">🔍 Read all PDFs</button>
+              <button class="btn btn-sm btn-outline" onclick="dedupeTenders()" style="height:34px" title="Remove duplicate imported tenders">🧹 Remove duplicates</button>
+              <button class="btn btn-sm btn-outline" onclick="openImportTenders()" style="height:34px" title="Import live opportunities from ICAI's Tender Monitoring Division">⬇ Import from ICAI</button>
+              <button class="btn btn-sm btn-primary" onclick="openAddTender()" style="height:34px">+ Add Tender</button>
+            </div>
+            <!-- live progress while tender PDFs are being read -->
+            <div id="tdProgress" style="display:none;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+                <div style="font-size:12px;font-weight:800" id="tdProgTitle">Reading tender PDFs…</div>
+                <div style="font-size:12px;font-weight:800;color:var(--primary)" id="tdProgPct">0%</div>
+              </div>
+              <div style="height:8px;background:#f1f5f9;border-radius:6px;overflow:hidden">
+                <div id="tdProgBar" style="height:100%;width:0%;background:var(--primary);border-radius:6px;transition:width .3s"></div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px" id="tdProgInfo"></div>
+            </div>
+            <div id="tdTableArea"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="pg-itrclient">
+        <div class="page-header"><div><div class="page-title">🧾 My ITR Filing</div><div class="page-sub" id="itrClientSub"></div></div></div>
+        <div id="itrClientArea"></div>
+      </div>
+
+      <div class="page" id="pg-recreport">
+        <div class="page-header">
+          <div><div class="page-title">Monthly Recurring Status</div><div class="page-sub">Status of recurring compliance tasks, month by month</div></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="rrMonths" onchange="renderRecReport()" style="height:34px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff">
+              <option value="3">Last 3 months</option>
+              <option value="6" selected>Last 6 months</option>
+              <option value="12">Last 12 months</option>
+            </select>
+            <button class="btn btn-sm btn-outline" onclick="downloadRecReport('excel')" style="height:34px">⬇ Excel</button>
+            <button class="btn btn-sm btn-outline" onclick="downloadRecReport('pdf')" style="height:34px">⬇ PDF</button>
+          </div>
+        </div>
+        <div id="recReportArea" style="margin-top:8px"></div>
+      </div>
+
+      <div class="page" id="pg-reports">
+        <div class="page-header">
+          <div><div class="page-title">Reports</div></div>
+          <div id="rpPDFBtn" style="display:none"><button class="btn btn-sm btn-outline" onclick="exportReportPDF()">⬇ PDF</button></div>
+        </div>
+        <div class="page-body">
+          <div style="display:flex;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:14px;overflow-x:auto;gap:2px">
+            <button id="rpT1" onclick="switchReport('performance')" style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;background:var(--primary);color:#fff;min-width:80px">📊 Performance</button>
+            <button id="rpT2" onclick="switchReport('monthly')"     style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:70px">📅 Monthly</button>
+            <button id="rpT3" onclick="switchReport('workload')"    style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:70px">⚖ Workload</button>
+            <button id="rpT4" onclick="switchReport('overdue')"     style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:65px">🔴 Overdue</button>
+            <button id="rpT5" onclick="switchReport('clients')"     style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:60px">🏢 Clients</button>
+            <button id="rpT6" onclick="switchReport('duedatelog')"   style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:95px">📆 Due Date Log</button>
+            <button id="rpT7" onclick="switchReport('leave')"        style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:65px">🌴 Leave</button>
+            <button id="rpT8" onclick="switchReport('recurring')"    style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:120px">📅 Monthly Status</button>
+            <button id="rpT9" onclick="switchReport('audit')"        style="flex:1;height:34px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);min-width:95px">🔎 Audit Trail</button>
+          </div>
+          <div id="rpMonthRow" style="display:none;gap:8px;margin-bottom:12px">
+            <select id="rpM" onchange="loadMonthlyRp()" style="flex:1;height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:13px;background:#fff"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
+            <select id="rpY" onchange="loadMonthlyRp()" style="width:88px;height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 10px;font-size:13px;background:#fff"></select>
+          </div>
+          <div id="rpContent"></div>
+        </div>
+      </div>
+
+      <!-- MY TASKS (Member) -->
+      <div class="page" id="pg-myassign">
+        <div class="page-header">
+          <div><div class="page-title" id="mWelcome">My Tasks</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-outline" id="mBulkDelBtn" style="display:none;background:#fef2f2;border-color:#fecaca;color:var(--red)" onclick="mBulkDelete()">🗑 (<span id="mBulkCount">0</span>)</button>
+          </div>
+        </div>
+        <div class="page-body">
+          <div id="mStatGrid" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none"></div>
+          <div id="mPeriodWrap" style="margin-bottom:12px"></div>
+          <div style="background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden">
+            <div style="display:flex;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none">
+              <button class="dash-tab active" onclick="setMyTab('',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:700;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer">All</button>
+              <button class="dash-tab" onclick="setMyTab('Pending',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Pending</button>
+              <button class="dash-tab" onclick="setMyTab('In Progress',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">In Progress</button>
+              <button class="dash-tab" onclick="setMyTab('Completed',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Done</button>
+              <button class="dash-tab" onclick="setMyTab('overdue',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--red);border-bottom:2px solid transparent;cursor:pointer">⚠ Overdue</button>
+            </div>
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:420px">
+                <thead>
+                  <tr style="background:#f9fafb;border-bottom:1px solid var(--border)">
+                    <th style="padding:8px 10px;text-align:left;width:32px"><input type="checkbox" id="mSelectAll" onchange="mToggleSelectAll(this)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary)"/></th>
+                    <th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left">Client</th>
+                    <th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left">Work</th>
+                    <th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left">Status</th>
+                    <th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left">%</th>
+                    <th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left">Due</th>
+                    <th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left">Days</th>
+                    <th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left">Update</th>
+                  </tr>
+                </thead>
+                <tbody id="myTaskTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-MANAGE (Member) -->
+      <div class="page" id="pg-submanage">
+        <div class="page-header">
+          <div><div class="page-title">My Team</div><div class="page-sub">Work delegated to juniors</div></div>
+          <button class="btn btn-sm btn-primary" onclick="openSubSheet(null)">+ Assign</button>
+        </div>
+        <div class="page-body"><div id="subManageList"></div></div>
+      </div>
+
+      <!-- SUPERVISING (Member) -->
+      <div class="page" id="pg-supervising">
+        <div class="page-header">
+          <div><div class="page-title">Supervising</div><div class="page-sub" id="supCount">0 assignments</div></div>
+          <input id="supSearch" placeholder="🔍 Search…" oninput="renderSupervising()" style="height:36px;padding:0 10px;font-size:12px;border:1.5px solid var(--border);border-radius:10px;width:130px;background:#fff"/>
+        </div>
+        <div style="display:flex;gap:6px;background:#f3f4f6;border-radius:10px;padding:3px;margin:0 16px 10px">
+          <button id="supTypeOne" class="sup-type" onclick="setSupType('onetime',this)" style="flex:1;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary);color:#fff">📋 One-Time</button>
+          <button id="supTypeRec" class="sup-type" onclick="setSupType('recurring',this)" style="flex:1;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted)">🔄 Recurring</button>
+        </div>
+        <div style="display:flex;overflow-x:auto;border-bottom:1px solid var(--border);background:#fff;scrollbar-width:none;margin:0 16px 0;border-radius:14px 14px 0 0;border:1px solid var(--border)">
+          <button class="sup-tab active" onclick="setSupTab('',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:700;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer">All</button>
+          <button class="sup-tab" onclick="setSupTab('Pending',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Pending</button>
+          <button class="sup-tab" onclick="setSupTab('In Progress',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">In Progress</button>
+          <button class="sup-tab" onclick="setSupTab('Completed',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer">Done</button>
+          <button class="sup-tab" onclick="setSupTab('overdue',this)" style="flex-shrink:0;padding:8px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--red);border-bottom:2px solid transparent;cursor:pointer">⚠ Overdue</button>
+        </div>
+        <div class="page-body" style="padding-top:0">
+          <div style="background:#fff;border-radius:0 0 14px 14px;border:1px solid var(--border);border-top:none;overflow:hidden;margin-bottom:12px">
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+              <table style="border-collapse:collapse;font-size:12px;width:auto">
+                <thead><tr style="background:#f9fafb;border-bottom:1px solid var(--border)">
+                  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Client</th>
+                  <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Work</th>
+                  <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Member</th>
+                  <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Status</th>
+                  <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">%</th>
+                  <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;min-width:110px">Remark</th>
+                  <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Due</th>
+                  <th style="padding:8px 8px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase">Action</th>
+                </tr></thead>
+                <tbody id="supTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div id="bottomNav"><div class="bnav-row" id="bnavRow"></div></div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="onFabClick()">+</button>
+</div>
+
+<!-- DRAWER -->
+<div id="drawer">
+  <div class="drawer-overlay" onclick="closeDrawer()"></div>
+  <div class="drawer-panel">
+    <div class="drawer-header">
+      <div class="drawer-avatar" id="drawerAvatar">G</div>
+      <div class="drawer-name" id="drawerName">Admin</div>
+      <div class="drawer-role" id="drawerRole">Administrator</div>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-footer">
+      <button class="btn btn-outline btn-full" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-overlay" onclick="closeNotifPanel()"></div>
+  <div class="notif-drawer">
+    <div class="notif-header">
+      <div class="notif-title">🔔 Notifications</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-xs btn-outline" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.55)" onclick="clearAllNotifs()">Clear All</button>
+        <button class="btn btn-xs btn-outline" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.55)" onclick="closeNotifPanel()">✕</button>
+      </div>
+    </div>
+    <div class="notif-list" id="npList"></div>
+  </div>
+</div>
+
+<!-- OVERDUE DETAIL -->
+<div class="sheet-overlay" id="overdueOverlay" onclick="closeSheet('overdueSheet','overdueOverlay')"></div>
+<div class="sheet" id="overdueSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" style="color:var(--red)">⚠ Overdue Assignments</div></div>
+  <div class="sheet-body" id="overdueSheetBody"></div>
+  <div class="sheet-footer"><button class="btn btn-primary btn-full" onclick="closeSheet('overdueSheet','overdueOverlay')">Acknowledge</button></div>
+</div>
+
+<!-- ADD LEAD SHEET -->
+<div class="sheet-overlay" id="addLeadOvl" onclick="closeSheet('addLeadSheet','addLeadOvl')"></div>
+<div class="sheet" id="addLeadSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="addLeadTitle">➕ Add Lead</div></div>
+  <div class="sheet-body">
+    <input type="hidden" id="ldEditId">
+    <div class="field"><label>Name of the Lead *</label><input id="ldName" type="text" placeholder="Company / party name"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Point of Contact</label><input id="ldPoc" type="text" placeholder="Contact person"></div>
+      <div class="field"><label>Designation of POC</label><input id="ldPocDes" type="text" placeholder="e.g. Director, CFO"></div>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="ldStatus">
+        <option>Generated POC</option>
+        <option>Contacted POC</option>
+        <option>Fixed Meeting with POC</option>
+        <option>Met with POC</option>
+        <option>Got the Assignment</option>
+        <option>Lost the Assignment</option>
+      </select>
+    </div>
+    <div class="field"><label>Note / first remark (optional)</label><textarea id="ldNote" rows="2" placeholder="Any context about this lead"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('addLeadSheet','addLeadOvl')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveLead()" id="ldSaveBtn">Add Lead</button>
+  </div>
+</div>
+
+<!-- LEAD DETAIL + EVENT TRAIL SHEET -->
+<div class="sheet-overlay" id="leadDetailOvl" onclick="closeSheet('leadDetailSheet','leadDetailOvl')"></div>
+<div class="sheet" id="leadDetailSheet" style="max-width:680px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="sheet-title" id="leadDetailTitle">Lead</div>
+    <div style="display:flex;gap:6px"><button class="btn btn-sm btn-outline" onclick="openEditLead()">✏ Edit</button><button class="btn btn-sm btn-outline" onclick="deleteLeadFromDetail()" style="color:#dc2626;border-color:#fecaca">🗑</button></div>
+  </div>
+  <div class="sheet-body" id="leadDetailBody"></div>
+  <div class="sheet-footer"><button class="btn btn-outline btn-full" onclick="closeSheet('leadDetailSheet','leadDetailOvl')">Close</button></div>
+</div>
+
+<!-- ADD / EDIT TENDER SHEET -->
+<div class="sheet-overlay" id="addTenderOvl" onclick="closeSheet('addTenderSheet','addTenderOvl')"></div>
+<div class="sheet" id="addTenderSheet" style="max-width:640px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="addTenderTitle">➕ Add Tender</div></div>
+  <div class="sheet-body">
+    <input type="hidden" id="tdEditId">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Category</label>
+        <select id="tdCategory"><option value="psu_company">PSU Company</option><option value="psu_bank">PSU Bank</option></select>
+      </div>
+      <div class="field"><label>Tender Reference No.</label><input id="tdRef" type="text" placeholder="e.g. NTPC/2026/AUD/017"></div>
+    </div>
+    <div class="field"><label>Name of PSU *</label><input id="tdPsuName" type="text" placeholder="e.g. NTPC Ltd / State Bank of India"></div>
+    <div class="field"><label>Nature of Work / Scope</label>
+      <input id="tdNature" type="text" list="tdNatureList" placeholder="e.g. Statutory Audit">
+      <datalist id="tdNatureList">
+        <option>Statutory Audit</option><option>Internal Audit</option><option>Concurrent Audit</option>
+        <option>Stock Audit</option><option>Revenue Audit</option><option>Tax Audit</option>
+        <option>GST Audit</option><option>Consultancy</option><option>Certification</option>
+      </datalist>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Application Date</label><input id="tdAppDate" type="date"></div>
+      <div class="field"><label>Due Date (last date to submit)</label><input id="tdDueDate" type="date"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Tender Value (₹)</label><input id="tdTenderVal" type="number" min="0" step="any" placeholder="0"></div>
+      <div class="field"><label>Quotation Value (₹)</label><input id="tdQuoteVal" type="number" min="0" step="any" placeholder="0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>EMD Amount (₹)</label><input id="tdEmd" type="number" min="0" step="any" placeholder="0"></div>
+      <div class="field"><label>EMD Status</label>
+        <select id="tdEmdStatus"><option value="">—</option><option>Pending</option><option>Paid</option><option>Exempted</option><option>Refunded</option><option>Forfeited</option></select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Source / Portal</label>
+        <input id="tdSource" type="text" list="tdSourceList" placeholder="e.g. GeM / CPPP">
+        <datalist id="tdSourceList"><option>GeM</option><option>CPPP (eProcure)</option><option>Bank Website</option><option>PSU Website</option><option>Newspaper</option></datalist>
+      </div>
+      <div class="field"><label>Tender Fee (₹)</label><input id="tdFee" type="number" min="0" step="any" placeholder="0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Bid Opening Date</label><input id="tdBidOpen" type="date"></div>
+      <div class="field"><label>Result / L1 Value (₹)</label><input id="tdL1" type="number" min="0" step="any" placeholder="0"></div>
+    </div>
+    <div class="field"><label>Partner Following Up</label><select id="tdPartner"></select></div>
+    <div class="field"><label>Tender Status</label>
+      <select id="tdStatus">
+        <option>Identified</option>
+        <option>Bid Submitted</option>
+        <option>Technical Evaluation</option>
+        <option>Financial Bid Opened</option>
+        <option>Under Evaluation</option>
+        <option>Awarded</option>
+        <option>Lost</option>
+        <option>Cancelled / Retendered</option>
+      </select>
+    </div>
+    <div class="field" id="tdNoteField"><label>Remark / first note (optional)</label><textarea id="tdNote" rows="2" placeholder="Any context about this tender"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('addTenderSheet','addTenderOvl')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveTender()" id="tdSaveBtn">Add Tender</button>
+  </div>
+</div>
+
+<!-- IMPORT TENDERS FROM ICAI TMD -->
+<div class="sheet-overlay" id="impTenderOvl" onclick="closeSheet('impTenderSheet','impTenderOvl')"></div>
+<div class="sheet" id="impTenderSheet" style="max-width:780px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">⬇ Import Government Tenders</div></div>
+  <div class="sheet-body">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+      Live opportunities from the <b>ICAI Tender Monitoring Division</b> (tmdicai.org). Tick the ones you want to track and import them as tenders. Already-imported ones are marked and can't be added twice.
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+      <div style="flex:1;min-width:140px"><label style="font-size:10px;color:var(--muted);font-weight:700">SEARCH</label>
+        <input id="impSearch" placeholder="PSU, work, state…" oninput="renderImportList()" style="width:100%;height:34px;padding:0 8px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;box-sizing:border-box"></div>
+      <div><label style="font-size:10px;color:var(--muted);font-weight:700">TYPE</label><br>
+        <select id="impCat" onchange="renderImportList()" style="height:34px;padding:0 8px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;background:#fff">
+          <option value="all">All</option><option value="psu_company">PSU Companies</option><option value="psu_bank">PSU Banks</option>
+        </select></div>
+      <button class="btn btn-sm btn-outline" style="height:34px" onclick="impSelectAll(true)">Select all</button>
+      <button class="btn btn-sm btn-outline" style="height:34px" onclick="impSelectAll(false)">Clear</button>
+      <button class="btn btn-sm btn-outline" style="height:34px" onclick="loadImportTenders()">⟳ Refresh</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:12px;font-weight:800">Opportunities</span>
+      <span id="impCount" style="font-size:11px;color:var(--muted);font-weight:700">—</span>
+    </div>
+    <div id="impList" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px">
+      Imported as status <b>Identified</b>, source <b>ICAI TMD</b>, with you as the partner following up. Tender/quotation values and EMD aren't published in the listing — add them yourself. Always confirm details in the official tender PDF.
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('impTenderSheet','impTenderOvl')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="doImportTenders()" id="impSaveBtn">Import Selected</button>
+  </div>
+</div>
+
+<!-- TENDER DETAIL + REMARKS TRAIL SHEET -->
+<div class="sheet-overlay" id="tenderDetailOvl" onclick="closeSheet('tenderDetailSheet','tenderDetailOvl')"></div>
+<div class="sheet" id="tenderDetailSheet" style="max-width:700px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="sheet-title" id="tenderDetailTitle">Tender</div>
+    <div style="display:flex;gap:6px"><button class="btn btn-sm btn-outline" onclick="openEditTender()">✏ Edit</button><button class="btn btn-sm btn-outline" onclick="deleteTenderFromDetail()" style="color:#dc2626;border-color:#fecaca">🗑</button></div>
+  </div>
+  <div class="sheet-body" id="tenderDetailBody"></div>
+  <div class="sheet-footer"><button class="btn btn-outline btn-full" onclick="closeSheet('tenderDetailSheet','tenderDetailOvl')">Close</button></div>
+</div>
+
+<!-- GENERIC ITR MODAL -->
+<div class="sheet-overlay" id="itrModalOverlay" onclick="closeSheet('itrModalSheet','itrModalOverlay')"></div>
+<div class="sheet" id="itrModalSheet" style="max-width:640px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="itrModalTitle">ITR</div></div>
+  <div class="sheet-body" id="itrModalBody"></div>
+  <div class="sheet-footer"><button class="btn btn-outline btn-full" onclick="closeSheet('itrModalSheet','itrModalOverlay')">Close</button></div>
+</div>
+
+<!-- ASSIGNMENT FORM -->
+<div class="sheet-overlay" id="assignOverlay" onclick="closeSheet('assignSheet','assignOverlay')"></div>
+<div class="sheet" id="assignSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="assignSheetTitle">New Assignment</div></div>
+  <div class="sheet-body">
+    <!-- Multi-client selector (new) shown when creating -->
+    <div class="field" id="aCliMultiField">
+      <label>Client(s) * <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted)">select one or more</span></label>
+      <input id="aCliSearch" placeholder="🔍 Search clients…" oninput="filterAssignClients(this.value)"
+        style="width:100%;height:40px;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;margin-bottom:6px;background:#fff"/>
+      <div id="aCliList" style="border:1.5px solid var(--border);border-radius:12px;max-height:160px;overflow-y:auto;background:#fff"></div>
+      <div style="font-size:11px;color:var(--primary);font-weight:700;margin-top:5px" id="aCliCount">0 clients selected</div>
+    </div>
+    <!-- Single client dropdown (shown when editing) -->
+    <div class="field" id="aCliSingleField" style="display:none">
+      <label>Client *</label><select id="aCli"></select>
+    </div>
+    <div class="field"><label>Assign To *</label><select id="aMem"></select></div>
+    <div class="field"><label>Reporting Person</label><select id="aRep"></select></div>
+    <!-- Work Type with manual option -->
+    <div class="field">
+      <label>Work Type *</label>
+      <select id="aWrk" onchange="toggleAssignManual(this.value)">
+        <option value="">Select work type…</option>
+        <option>ITR Filing</option><option>GST Return</option><option>GSTR-1</option>
+        <option>GSTR-3B</option><option>TDS Return</option><option>TDS Monthly Deposit</option>
+        <option>Audit</option><option>ROC Filing</option><option>Balance Sheet</option>
+        <option>Tax Planning</option><option>Payroll</option><option>MSME Registration</option>
+        <option>PF/ESI Compliance</option><option>Loan Projection</option><option>MCA Filing</option>
+        <option>Trademark</option><option>Other</option>
+        <option value="__manual__">✏ Enter manually…</option>
+      </select>
+      <input id="aWrkManual" placeholder="Type work type name…"
+        style="margin-top:8px;display:none;width:100%;height:48px;padding:0 14px;border:1.5px solid var(--primary);border-radius:12px;font-size:15px;background:#fff"/>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Priority</label><select id="aPri"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+      <div class="field"><label>Due Date</label><input type="date" id="aDue"/></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="aNotes" placeholder="Additional details…"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('assignSheet','assignOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveAssignment()" id="aSaveBtn">Create</button>
+  </div>
+</div>
+
+<!-- PROGRESS UPDATE SHEET -->
+<div class="sheet-overlay" id="progressOverlay" onclick="closeSheet('progressSheet','progressOverlay')"></div>
+<div class="sheet" id="progressSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">Update Progress</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted)" id="rkClientInfo"></div>
+    <div class="slider-wrap">
+      <div class="slider-val-big" id="rkPctVal">0%</div>
+      <input type="range" id="rkPct" min="0" max="100" step="10" value="0"
+        oninput="updateSlider(this)"
+        style="width:100%"/>
+      <div class="pct-steps">
+        <span class="pct-step">0</span><span class="pct-step">10</span><span class="pct-step">20</span>
+        <span class="pct-step">30</span><span class="pct-step">40</span><span class="pct-step">50</span>
+        <span class="pct-step">60</span><span class="pct-step">70</span><span class="pct-step">80</span>
+        <span class="pct-step">90</span><span class="pct-step">100</span>
+      </div>
+    </div>
+    <div class="field" style="margin-top:16px"><label>Status</label>
+      <select id="rkStatus"><option>Pending</option><option>In Progress</option><option>Under Review</option><option>Completed</option><option>On Hold</option></select>
+    </div>
+    <div class="field"><label>Remark <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted)">(optional)</span></label>
+      <textarea id="rkRemark" placeholder="e.g. Waiting for documents, Filed on portal…"></textarea>
+    </div>
+    <div class="field" id="rkDueWrap" style="display:none"><label>Due Date <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted)">(CA can extend — change is logged)</span></label>
+      <input type="date" id="rkDue"/>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('progressSheet','progressOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveProgress()">Save Progress</button>
+  </div>
+</div>
+
+<!-- CLIENT FORM -->
+<!-- CLIENT PROFILE SHEET (admin) -->
+<div class="sheet-overlay" id="clientProfileOverlay" onclick="closeSheet('clientProfileSheet','clientProfileOverlay')"></div>
+<div class="sheet" id="clientProfileSheet" style="max-width:760px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="cpfTitle">Client Profile</div></div>
+  <div class="sheet-body">
+    <div id="cpfMeta" style="margin-bottom:14px"></div>
+    <div style="background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px">📄 G A R P Template</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Upload the G A R P Template (Excel .xlsx) for this client. Estimated payment date is auto-set to invoice date + 30 days. Re-uploading replaces the register but keeps any actual payment dates already entered.</div>
+      <div style="margin-bottom:10px"><a href="/GARP_Template.xlsx" download style="font-size:12px;font-weight:700;color:var(--primary);text-decoration:none">⬇ Download blank G A R P Template</a></div>
+      <input type="file" id="cpfFile" accept=".xlsx,.xls" style="font-size:12px;margin-bottom:8px"/>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="uploadInvoiceRegister()">⬆ Upload G A R P Template</button>
+        <button class="btn btn-outline btn-sm" onclick="loadClientInvoices()">↻ View Register</button>
+      </div>
+      <div id="cpfUploadStatus" style="font-size:12px;margin-top:8px"></div>
+    </div>
+    <div id="cpfInvoiceArea"></div>
+    <div style="background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:14px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px">🔐 Client Dashboard Access</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Choose which dashboards this client can see in their portal.</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;cursor:pointer"><input type="checkbox" id="cpfDashTasks" checked> My Tasks</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;cursor:pointer"><input type="checkbox" id="cpfDashBilling" checked> Billing dashboard</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;cursor:pointer"><input type="checkbox" id="cpfDashCash" checked> Cash Flow dashboard</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;cursor:pointer"><input type="checkbox" id="cpfDashDebtors" checked> Debtors dashboard</label>
+      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveClientDashboards()">Save Access</button>
+      <div id="cpfDashStatus" style="font-size:12px;margin-top:6px"></div>
+    </div>
+  </div>
+  <div class="sheet-footer" style="flex-wrap:wrap;gap:6px">
+    <button class="btn btn-outline" style="flex:1;min-width:90px" onclick="closeSheet('clientProfileSheet','clientProfileOverlay')">Close</button>
+    <button class="btn btn-outline" style="flex:1;min-width:90px" onclick="openComplianceEditor(cpfClientId)">🗓️ Compliance</button>
+    <button class="btn btn-primary" style="flex:1;min-width:90px" onclick="openEditClient(cpfClientId)">✏ Edit Details</button>
+  </div>
+</div>
+
+<!-- COMPLIANCE EDITOR SHEET (admin) -->
+<div class="sheet-overlay" id="compEditorOverlay" onclick="closeSheet('compEditorSheet','compEditorOverlay')"></div>
+<div class="sheet" id="compEditorSheet" style="max-width:920px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="compEditorTitle">Compliance</div></div>
+  <div class="sheet-body"><div id="compEditorBody"><div style="padding:24px;text-align:center;color:var(--muted)">Loading…</div></div></div>
+  <div class="sheet-footer"><button class="btn btn-outline" style="flex:1" onclick="closeSheet('compEditorSheet','compEditorOverlay')">Close</button></div>
+</div>
+
+<!-- COMPLIANCE CELL EDITOR SHEET -->
+<div class="sheet-overlay" id="cmpCellOverlay" onclick="closeSheet('cmpCellSheet','cmpCellOverlay')"></div>
+<div class="sheet" id="cmpCellSheet" style="max-width:440px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="cmpCellTitle">Update Compliance</div></div>
+  <div class="sheet-body"><div id="cmpCellBody"></div></div>
+</div>
+
+<div class="sheet-overlay" id="clientOverlay" onclick="closeSheet('clientSheet','clientOverlay')"></div>
+<div class="sheet" id="clientSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="clientSheetTitle">Add Client</div></div>
+  <div class="sheet-body">
+    <div class="field"><label>Client Name *</label><input id="cN" placeholder="Full legal name"/></div>
+    <div class="field"><label>Entity Type</label><select id="cT"><option>Individual</option><option>Pvt Ltd</option><option>Partnership</option><option>LLP</option><option>HUF</option><option>Trust</option><option>OPC</option><option>Other</option></select></div>
+    <div class="field-row">
+      <div class="field"><label>PAN</label><input id="cPan" placeholder="ABCDE1234F" oninput="this.value=this.value.toUpperCase()"/></div>
+      <div class="field"><label>GSTIN</label><input id="cGst" oninput="this.value=this.value.toUpperCase()"/></div>
+    </div>
+    <div class="field"><label>Contact</label><input id="cCon" placeholder="Phone or email"/></div>
+    <div class="field"><label>City / Address</label><input id="cAdr" placeholder="e.g. Noida, UP"/></div>
+    <div style="margin-top:8px;padding:12px;background:#f9fafb;border-radius:12px;border:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px">🔐 Client Login</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">By default the client logs in with their <b>PAN</b> as both username and password. Fill the fields below only to override.</div>
+      <div class="field"><label>Client Username (optional — defaults to PAN)</label><input id="cUser" placeholder="Defaults to PAN" autocomplete="off" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')"/></div>
+      <div class="field"><label>Client Password (optional — defaults to PAN)</label><input id="cPass" type="text" placeholder="Defaults to PAN" autocomplete="new-password"/></div>
+      <div id="cLoginStatus" style="font-size:11px;color:var(--green);font-weight:700;display:none">✓ Login is active. Leave password blank to keep it unchanged.</div>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('clientSheet','clientOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveClient()" id="cSaveBtn">Add Client</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="groupsOverlay" onclick="closeSheet('groupsSheet','groupsOverlay')"></div>
+<div class="sheet" id="groupsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">👥 Company Groups</div></div>
+  <div class="sheet-body">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Create a group with one login. Then assign companies to it — the group login sees all its companies via a dropdown, plus a combined view. Companies in a group don't need their own login.</div>
+    <div style="padding:12px;background:#f9fafb;border-radius:12px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:8px">➕ New Group</div>
+      <div class="field"><label>Group Name *</label><input id="gN" placeholder="e.g. Sharma Group"/></div>
+      <div class="field"><label>Login Username *</label><input id="gU" placeholder="e.g. sharmagroup" autocomplete="off" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')"/></div>
+      <div class="field"><label>Login Password *</label><input id="gP" type="text" placeholder="Set a password"/></div>
+      <button class="btn btn-primary btn-sm" onclick="createGroup()">Create Group</button>
+      <div id="gCreateStatus" style="font-size:11px;margin-top:6px"></div>
+    </div>
+    <div id="groupsList"></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('groupsSheet','groupsOverlay')">Close</button>
+  </div>
+</div>
+
+<!-- USER FORM -->
+<div class="sheet-overlay" id="userOverlay" onclick="closeSheet('userSheet','userOverlay')"></div>
+<div class="sheet" id="userSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="userSheetTitle">Add Team Member</div></div>
+  <div class="sheet-body">
+    <div class="field"><label>Full Name *</label><input id="uN" placeholder="e.g. Rahul Sharma"/></div>
+    <div class="field-row">
+      <div class="field"><label>Username *</label><input id="uU" placeholder="rahul" autocapitalize="none"/></div>
+      <div class="field"><label>Designation</label><input id="uDes" placeholder="Senior Manager…"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Qualification</label>
+        <select id="uQual">
+          <option value="CA">Chartered Accountant (CA)</option>
+          <option value="CS">Company Secretary (CS)</option>
+          <option value="Others">Others (Article / Staff)</option>
+        </select>
+      </div>
+      <div class="field"><label>Office Branch</label>
+        <select id="uBranch">
+          <option value="Greater Noida (HO)">Greater Noida (HO)</option>
+          <option value="Agra (BO)">Agra (BO)</option>
+          <option value="Pune (BO)">Pune (BO)</option>
+          <option value="Delhi (BO)">Delhi (BO)</option>
+          <option value="Indore (BO)">Indore (BO)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Date of Joining</label><input type="date" id="uJoining"/></div>
+      <div class="field"><label>Date of Birth</label><input type="date" id="uDob"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Anniversary Date</label><input type="date" id="uAnniversary"/></div>
+      <div class="field"><label>Opening Leave Balance</label><input type="number" id="uOpenLeave" placeholder="0" min="0" step="0.5"/></div>
+    </div>
+    <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:4px 0 10px">💰 Salary Structure (Monthly)</div>
+    <div class="field-row">
+      <div class="field"><label>Basic Salary</label><input type="number" id="uBasic" placeholder="0"/></div>
+      <div class="field"><label>HRA</label><input type="number" id="uHRA" placeholder="0"/></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Conveyance</label><input type="number" id="uConveyance" placeholder="0"/></div>
+      <div class="field"><label>Other Allowance</label><input type="number" id="uOther" placeholder="0"/></div>
+    </div>
+    <div style="background:#f9fafb;border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:12px" id="uGrossPreview">Gross: ₹0/month</div>
+    <div class="field"><label>Role</label><select id="uR"><option value="member">Team Member</option><option value="admin">Admin</option></select></div>
+    <div class="field"><label id="uPwLbl">Password *</label><input type="password" id="uP" placeholder="Min 6 characters"/><p id="uPwNote" style="font-size:11px;color:var(--muted);margin-top:4px;display:none">Leave blank to keep existing password</p></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('userSheet','userOverlay')">Cancel</button>
+    <button class="btn btn-danger" id="uDelBtn" style="flex:1;display:none" onclick="deleteUser()">🗑 Delete</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveUser()" id="uSaveBtn">Add Member</button>
+  </div>
+</div>
+
+<!-- RESET PASSWORD SHEET -->
+<div class="sheet-overlay" id="rpOverlay" onclick="closeSheet('rpSheet','rpOverlay')"></div>
+<div class="sheet" id="rpSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">🔑 Reset Password</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted)" id="rpName"></div>
+    <div class="field"><label>New Password *</label><input type="password" id="rpPw" placeholder="Min 6 characters"/></div>
+    <div class="field"><label>Confirm *</label><input type="password" id="rpPw2" placeholder="Repeat password"/></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('rpSheet','rpOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="doResetPw()">Reset Password</button>
+  </div>
+</div>
+
+<!-- REMINDER SHEET -->
+<div class="sheet-overlay" id="reminderOverlay" onclick="closeSheet('reminderSheet','reminderOverlay')"></div>
+<div class="sheet" id="reminderSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">🔔 Send Reminder</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.6" id="remInfo"></div>
+    <div class="field"><label>Message</label><textarea id="remMsg" placeholder="e.g. Please update status, Documents needed urgently…" style="min-height:100px"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('reminderSheet','reminderOverlay')">Cancel</button>
+    <button class="btn btn-amber" style="flex:2" onclick="sendReminder()">🔔 Send Reminder</button>
+  </div>
+</div>
+
+<!-- DDR SHEET -->
+<div class="sheet-overlay" id="ddrOverlay" onclick="closeSheet('ddrSheet','ddrOverlay')"></div>
+<div class="sheet" id="ddrSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">📅 Request Due Date Change</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.6" id="ddrInfo"></div>
+    <div class="field"><label>Current Due Date</label><input id="ddrCurrent" readonly style="background:#f9fafb;color:var(--muted)"/></div>
+    <div class="field"><label>New Requested Date *</label><input type="date" id="ddrNewDate"/></div>
+    <div class="field"><label>Reason *</label><textarea id="ddrReason" placeholder="e.g. Client documents not received…"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('ddrSheet','ddrOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveDDR()">Send to Admin</button>
+  </div>
+</div>
+
+<!-- DDR REVIEW SHEET -->
+<div class="sheet-overlay" id="ddrReviewOverlay" onclick="closeSheet('ddrReviewSheet','ddrReviewOverlay')"></div>
+<div class="sheet" id="ddrReviewSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">📅 Review Request</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8" id="ddrReviewInfo"></div>
+    <div class="field"><label>Admin Note (optional)</label><textarea id="ddrAdminNote" placeholder="Reason for approval or rejection…"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('ddrReviewSheet','ddrReviewOverlay')">Cancel</button>
+    <button class="btn btn-danger" style="flex:1" onclick="reviewDDR('rejected')">❌ Reject</button>
+    <button class="btn btn-success" style="flex:1" onclick="reviewDDR('approved')">✅ Approve</button>
+  </div>
+</div>
+
+<!-- REOPEN SHEET -->
+<div class="sheet-overlay" id="reopenOverlay" onclick="closeSheet('reopenSheet','reopenOverlay')"></div>
+<div class="sheet" id="reopenSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">🔓 Request Reopen</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.6" id="reopenInfo"></div>
+    <div class="field"><label>Reason *</label><textarea id="reopenReason" placeholder="e.g. Task marked complete by mistake, Additional work needed…" style="min-height:100px"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('reopenSheet','reopenOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveReopenReq()">Send to Admin</button>
+  </div>
+</div>
+
+<!-- REOPEN REVIEW SHEET -->
+<div class="sheet-overlay" id="ropReviewOverlay" onclick="closeSheet('ropReviewSheet','ropReviewOverlay')"></div>
+<div class="sheet" id="ropReviewSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">🔓 Review Reopen Request</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8" id="ropReviewInfo"></div>
+    <div class="field"><label>Admin Note</label><textarea id="ropAdminNote" placeholder="Reason…"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('ropReviewSheet','ropReviewOverlay')">Cancel</button>
+    <button class="btn btn-danger" style="flex:1" onclick="reviewReopenReq('rejected')">❌ Reject</button>
+    <button class="btn btn-success" style="flex:1" onclick="reviewReopenReq('approved')">✅ Approve</button>
+  </div>
+</div>
+
+<!-- SUB-ASSIGN SHEET -->
+<div class="sheet-overlay" id="subOverlay" onclick="closeSheet('subSheet','subOverlay')"></div>
+<div class="sheet" id="subSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">👥 Sub-Assign Work</div></div>
+  <div class="sheet-body">
+    <div style="background:#eff6ff;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#1e40af;line-height:1.6" id="subParentInfo"></div>
+    <div class="field"><label>Assign To (Junior) *</label><select id="subMem"></select></div>
+    <div class="field"><label>Work Description *</label><input id="subWork" placeholder="e.g. Prepare GSTR-1 data…"/></div>
+    <div class="field-row">
+      <div class="field"><label>Priority</label><select id="subPri"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+      <div class="field"><label>Due Date</label><input type="date" id="subDue"/></div>
+    </div>
+    <div class="field"><label>Instructions</label><textarea id="subNotes" placeholder="Detailed instructions…"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('subSheet','subOverlay')">Cancel</button>
+    <button class="btn btn-purple" style="flex:2" onclick="saveSubAssign()">👥 Sub-Assign</button>
+  </div>
+</div>
+
+<!-- RECURRING FORM -->
+<div class="sheet-overlay" id="recOverlay" onclick="closeSheet('recSheet','recOverlay')"></div>
+<div class="sheet" id="recSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="recSheetTitle">🔄 Add Recurring Task</div></div>
+  <div class="sheet-body">
+    <!-- Mode: custom task vs statutory calendar -->
+    <div id="recModeRow" style="display:flex;gap:6px;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:14px">
+      <button type="button" id="recModeCustomBtn" onclick="setRecMode('custom')" style="flex:1;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary);color:#fff">✏ Custom Task</button>
+      <button type="button" id="recModeStatBtn" onclick="setRecMode('statutory')" style="flex:1;height:36px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted)">⚖ Statutory Calendar</button>
+    </div>
+    <!-- Multi-client -->
+    <div class="field" id="recCliField">
+      <label>Client(s) * <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted)">select one or more</span></label>
+      <input id="recCliSearch" placeholder="🔍 Search clients…" oninput="filterRecClients(this.value)"
+        style="width:100%;height:40px;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;margin-bottom:6px;background:#fff"/>
+      <div id="recCliList" style="border:1.5px solid var(--border);border-radius:12px;max-height:160px;overflow-y:auto;background:#fff"></div>
+      <div style="font-size:11px;color:var(--primary);font-weight:700;margin-top:5px" id="recCliCount">0 clients selected</div>
+    </div>
+    <div class="field"><label>Assign To *</label><select id="recMem"></select></div>
+    <div class="field"><label>Reporting Person</label><select id="recRep"></select></div>
+    <!-- STATUTORY MODE: obligations checklist -->
+    <div id="recStatBlock" style="display:none">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">
+        Tick the statutory obligations that apply. Recurring tasks are created with the standard due dates — no manual due day or frequency needed.
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:800">Obligations</span>
+        <span id="statCount" style="font-size:11px;color:var(--muted);font-weight:700">0 selected</span>
+      </div>
+      <div id="statCatalog" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px">
+        These are the standard statutory deadlines. Government extensions happen — every created template stays editable here.
+      </div>
+    </div>
+
+    <!-- CUSTOM MODE: work type, due day, frequency -->
+    <div id="recCustomBlock">
+    <!-- Work Type with manual option -->
+    <div class="field">
+      <label>Work Type *</label>
+      <select id="recWrk" onchange="toggleRecManual(this.value)">
+        <option value="">Select work type…</option>
+        <option>ITR Filing</option><option>GST Return</option><option>GSTR-1</option>
+        <option>GSTR-3B</option><option>TDS Return</option><option>TDS Monthly Deposit</option>
+        <option>Audit</option><option>ROC Filing</option><option>Balance Sheet</option>
+        <option>Tax Planning</option><option>Payroll</option><option>MSME Registration</option>
+        <option>PF/ESI Compliance</option><option>Loan Projection</option><option>MCA Filing</option>
+        <option>Trademark</option><option value="__manual__">✏ Enter manually…</option>
+      </select>
+      <input id="recWrkManual" placeholder="Type work type name…"
+        style="margin-top:8px;display:none;width:100%;height:48px;padding:0 14px;border:1.5px solid var(--primary);border-radius:12px;font-size:15px;background:#fff"/>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Priority</label><select id="recPri"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+      <div class="field"><label>Due Day *</label>
+        <select id="recDay">
+          <option value="">Select…</option>
+          <option value="5">5th</option><option value="7">7th</option><option value="10">10th</option>
+          <option value="11">11th</option><option value="13">13th</option><option value="15">15th</option>
+          <option value="20">20th</option><option value="21">21st</option><option value="25">25th</option>
+          <option value="28">28th</option><option value="30">30th</option><option value="31">Last</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Frequency</label><select id="recFreq" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px"><option value="Monthly">Monthly</option><option value="Quarterly">Quarterly (Jan/Apr/Jul/Oct)</option><option value="Half-Yearly">Half-Yearly (Jan &amp; Jul)</option><option value="Annually">Annually (April)</option></select></div>
+    <div class="field"><label>Notes</label><textarea id="recNotes" placeholder="e.g. File GSTR-1 for the month…"></textarea></div>
+    <div class="field" id="recStatusField" style="display:none"><label>Status</label>
+      <select id="recStatus"><option value="1">Active</option><option value="0">Paused</option></select>
+    </div>
+    </div><!-- /recCustomBlock -->
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('recSheet','recOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="recSave()" id="recSaveBtn">Add Task</button>
+  </div>
+</div>
+
+<!-- ASSIGNMENT DETAIL SHEET -->
+<div class="sheet-overlay" id="detailOverlay" onclick="closeSheet('detailSheet','detailOverlay')"></div>
+<div class="sheet" id="detailSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="sheet-title">Assignment Details</div>
+    <div id="detailActions" style="display:flex;gap:6px"></div>
+  </div>
+  <div class="sheet-body">
+    <!-- Info block -->
+    <div id="detailInfo" style="background:#f9fafb;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8"></div>
+    <!-- Progress bar -->
+    <div id="detailProgress" style="margin-bottom:14px"></div>
+    <!-- Assignee remark -->
+    <div id="detailRemarkBlock" style="margin-bottom:14px"></div>
+    <!-- Add comment (shared thread — visible to assignee, reporting manager & admin) -->
+    <div id="detailSupRemarkBlock">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">💬 Add Comment</div>
+      <textarea id="detailSupRemark" placeholder="Type a comment — everyone on this task can see it…" style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;resize:none"></textarea>
+    </div>
+    <!-- Activity log -->
+    <div id="detailActivityLog" style="margin-top:14px"></div>
+    <div id="detailCommentsLog"></div>
+    <!-- Sub-assign actions (shown to task owner) -->
+    <div id="detailSubActions" style="display:none;margin-top:14px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--border);padding-top:14px">
+      <button id="detailSubBtn" onclick="subAssignFromDetail()" style="width:100%;height:42px;border:1.5px dashed #a5b4fc;background:transparent;color:#6366f1;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">👥 Delegate Part of This Work to Junior</button>
+      <button onclick="closeSheet('detailSheet','detailOverlay');openAssignSheet()" style="width:100%;height:42px;border:1.5px dashed #bbf7d0;background:transparent;color:var(--green);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">➕ Assign New Work to Anyone</button>
+    </div>
+  </div>
+  <div class="sheet-footer" id="detailFooter">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('detailSheet','detailOverlay')">Close</button>
+    <button class="btn btn-amber" style="flex:1" id="detailRemindBtn" onclick="openReminderFromDetail()">🔔 Remind</button>
+    <button class="btn btn-primary" style="flex:1" id="detailSaveBtn" onclick="saveDetailRemark()">Save Remark</button>
+    <button class="btn" style="flex:1;display:none;background:var(--green);color:#fff" id="detailApproveBtn" onclick="approveCompletion(true)">✓ Approve</button>
+    <button class="btn" style="flex:1;display:none;background:#fef2f2;border:1.5px solid #fecaca;color:var(--red)" id="detailRejectBtn" onclick="approveCompletion(false)">↩ Send Back</button>
+    <button class="btn btn-danger" id="detailDelBtn" style="display:none;flex:1" onclick="deleteFromDetail()">🗑 Delete</button>
+  </div>
+</div>
+
+<!-- MEMBER PROFILE SHEET (full attendance history) -->
+<div class="sheet-overlay" id="memberProfileOverlay" onclick="closeSheet('memberProfileSheet','memberProfileOverlay')"></div>
+<div class="sheet" id="memberProfileSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="sheet-title" id="memberProfileTitle">Member Profile</div>
+    <button class="btn btn-sm btn-primary" onclick="exportMemberExcel()">📥 Excel</button>
+  </div>
+  <div class="sheet-body" id="memberProfileBody"></div>
+  <div class="sheet-footer">
+    <button class="btn btn-primary btn-full" onclick="closeSheet('memberProfileSheet','memberProfileOverlay')">Close</button>
+  </div>
+</div>
+
+<!-- SITE VISIT SHEET -->
+<div class="sheet-overlay" id="siteVisitOverlay" onclick="closeSheet('siteVisitSheet','siteVisitOverlay')"></div>
+<div class="sheet" id="siteVisitSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">🗺 Log Site Visit</div></div>
+  <div class="sheet-body">
+    <div class="field"><label>Site / Client Name *</label><input id="svSite" placeholder="e.g. Procon India Office, Noida"/></div>
+    <div class="field"><label>Client (optional)</label><select id="svClient"></select></div>
+    <div class="field"><label>Purpose</label><input id="svPurpose" placeholder="e.g. Document collection, Meeting…"/></div>
+    <div class="field-row">
+      <div class="field"><label>Check In</label><input type="time" id="svIn"/></div>
+      <div class="field"><label>Check Out</label><input type="time" id="svOut"/></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="svNotes" placeholder="Details of visit…"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('siteVisitSheet','siteVisitOverlay')">Cancel</button>
+    <button class="btn btn-primary" id="svSaveBtn" style="flex:2" onclick="onSiteVisitSave()">Log Visit</button>
+  </div>
+</div>
+
+<!-- EDIT PUNCH SHEET (admin) -->
+<div class="sheet-overlay" id="editPunchOvl" onclick="closeSheet('editPunchSheet','editPunchOvl')"></div>
+<div class="sheet" id="editPunchSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">✏ Edit Punch / Attendance</div></div>
+  <div class="sheet-body">
+    <div id="epName" style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:12px">—</div>
+    <input type="hidden" id="epUserId"><input type="hidden" id="epDate">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Punch In (HH:MM)</label><input id="epIn" type="time"></div>
+      <div class="field"><label>Punch Out (HH:MM)</label><input id="epOut" type="time"></div>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="epStatus">
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="Work from Home">Work from Home</option>
+        <option value="Site Visit">Site Visit</option>
+        <option value="Half Day">Half Day</option>
+        <option value="Casual Leave">Casual Leave (CL)</option>
+        <option value="Sick Leave">Sick Leave (SL)</option>
+        <option value="Earned Leave">Earned/Privilege Leave (EL)</option>
+        <option value="Leave Without Pay">Leave Without Pay (LWP)</option>
+      </select>
+    </div>
+    <div class="field"><label>Remark (reason for correction)</label><textarea id="epRemark" rows="2" placeholder="e.g. Forgot to punch out; corrected by admin"></textarea></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">Leaving both punch times blank with status Absent will clear the times. Hours are recomputed automatically.</div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('editPunchSheet','editPunchOvl')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveEditPunch()">Save Changes</button>
+  </div>
+</div>
+
+<!-- SALARY SLIP SHEET -->
+<div class="sheet-overlay" id="salSlipOverlay" onclick="closeSheet('salSlipSheet','salSlipOverlay')"></div>
+<div class="sheet" id="salSlipSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="sheet-title">💰 Salary Slip</div>
+    <div style="display:flex;gap:6px"><button class="btn btn-sm btn-outline" onclick="emailCurrentSlip()">📧 Email</button><button class="btn btn-sm btn-primary" onclick="printSalarySlip()">🖨 Print</button></div>
+  </div>
+  <div class="sheet-body" id="salSlipBody"></div>
+  <div class="sheet-footer">
+    <button class="btn btn-primary btn-full" onclick="closeSheet('salSlipSheet','salSlipOverlay')">Close</button>
+  </div>
+</div>
+
+<!-- LEAVE APPLICATION SHEET -->
+<div class="sheet-overlay" id="leaveOverlay" onclick="closeSheet('leaveSheet','leaveOverlay')"></div>
+<div class="sheet" id="leaveSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">📅 Apply for Leave</div></div>
+  <div class="sheet-body">
+    <div style="background:#eff6ff;border-radius:10px;padding:10px 12px;font-size:12px;color:#1e40af;margin-bottom:14px" id="leaveBalInfo">Loading balance…</div>
+    <div class="field"><label>Leave Type</label>
+      <select id="leaveType">
+        <option value="Casual Leave">Casual Leave (CL)</option>
+        <option value="Sick Leave">Sick Leave (SL)</option>
+        <option value="Earned Leave">Earned/Privilege Leave (EL)</option>
+        <option value="Comp Off">Comp Off (compensatory)</option>
+        <option value="Leave Without Pay">Leave Without Pay (LWP)</option>
+        <option value="Work from Home">Work from Home</option>
+        <option value="Half Day">Half Day</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>From Date *</label><input type="date" id="leaveFrom"/></div>
+      <div class="field"><label>To Date *</label><input type="date" id="leaveTo"/></div>
+    </div>
+    <div id="leaveDaysPreview" style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:12px;text-align:center"></div>
+    <div class="field"><label>Reason *</label><textarea id="leaveReason" placeholder="e.g. Medical appointment, Personal work…"></textarea></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('leaveSheet','leaveOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="applyLeave()">Apply for Leave</button>
+  </div>
+</div>
+
+<!-- MARK ATTENDANCE SHEET (Admin) -->
+<div class="sheet-overlay" id="markAttOverlay" onclick="closeSheet('markAttSheet','markAttOverlay')"></div>
+<div class="sheet" id="markAttSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">📋 Mark Attendance</div></div>
+  <div class="sheet-body">
+    <div style="background:#f9fafb;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;margin-bottom:14px" id="markAttMemberInfo"></div>
+    <div class="field"><label>Date *</label><input type="date" id="markAttDate"/></div>
+    <div class="field"><label>Status *</label>
+      <select id="markAttStatus">
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="Work from Home">Work from Home</option>
+        <option value="Site Visit">Site Visit</option>
+        <option value="Half Day">Half Day</option>
+        <option value="Casual Leave">Casual Leave (CL)</option>
+        <option value="Sick Leave">Sick Leave (SL)</option>
+        <option value="Earned Leave">Earned/Privilege Leave (EL)</option>
+        <option value="Leave Without Pay">Leave Without Pay (LWP)</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Punch In</label><input type="time" id="markAttIn"/></div>
+      <div class="field"><label>Punch Out</label><input type="time" id="markAttOut"/></div>
+    </div>
+    <div class="field"><label>Notes</label><input id="markAttNotes" placeholder="Optional note…"/></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('markAttSheet','markAttOverlay')">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveMarkAtt()">Save Attendance</button>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="sheet-overlay" id="delOverlay" onclick="closeSheet('delSheet','delOverlay')"></div>
+<div class="sheet" id="delSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" style="color:var(--red)">⚠ Confirm Delete</div></div>
+  <div class="sheet-body"><p id="delMsg" style="font-size:14px;color:var(--muted);line-height:1.6"></p></div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('delSheet','delOverlay')">Cancel</button>
+    <button class="btn btn-danger" style="flex:2" onclick="execDelete()">Delete</button>
+  </div>
+</div>
+
+<!-- INVOICE DRILL-DOWN SHEET (billing/cash bar click) -->
+<div class="sheet-overlay" id="cbDrillOverlay" onclick="closeSheet('cbDrillSheet','cbDrillOverlay')"></div>
+<div class="sheet" id="cbDrillSheet" style="max-width:720px">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="cbDrillTitle">Invoices</div></div>
+  <div class="sheet-body"><div id="cbDrillBody" style="overflow-x:auto"></div></div>
+  <div class="sheet-footer"><button class="btn btn-outline" style="flex:1" onclick="closeSheet('cbDrillSheet','cbDrillOverlay')">Close</button></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- CLIENT TASK DETAIL + COMMENTS SHEET -->
+<div class="sheet-overlay" id="cpTaskOverlay" onclick="closeSheet('cpTaskSheet','cpTaskOverlay')"></div>
+<div class="sheet" id="cpTaskSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title" id="cpTaskTitle">Task</div></div>
+  <div class="sheet-body">
+    <div id="cpTaskMeta" style="margin-bottom:14px"></div>
+    <div style="font-size:13px;font-weight:800;margin-bottom:8px">💬 Comments & Remarks</div>
+    <div id="cpThread" style="max-height:240px;overflow-y:auto;margin-bottom:12px"></div>
+    <div class="field"><label>Add a remark or reminder</label><textarea id="cpCommentText" rows="3" placeholder="Type your message to the GARP team…" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);font-size:14px;font-family:inherit;resize:vertical"></textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px">
+      <input type="checkbox" id="cpIsReminder"> <span>⏰ Mark as reminder (flag for the team)</span>
+    </label>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-outline" style="flex:1" onclick="closeSheet('cpTaskSheet','cpTaskOverlay')">Close</button>
+    <button class="btn btn-primary" style="flex:2" onclick="postClientComment()">Send</button>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<!-- Employee profile panel -->
+<div id="empOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5)" onclick="if(event.target===this)closeEmpProfile()">
+  <div id="empPanel" style="position:absolute;top:0;right:0;width:min(680px,100%);height:100%;background:#f4f5f7;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)">
+    <!-- header -->
+    <div id="empHdr" style="background:linear-gradient(135deg,#1a56db,#1e40af);flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          <button onclick="closeEmpProfile()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:34px;height:34px;border-radius:9px;font-size:18px;cursor:pointer;flex-shrink:0">&#8592;</button>
+          <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);white-space:nowrap">Employee Profile</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button id="empEditBtn" onclick="openEditProfile()" style="background:rgba(255,255,255,.22);border:none;color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;display:none">✏ Edit</button>
+          <button id="empDelBtn" onclick="deleteEmployee()" style="background:rgba(220,38,38,.9);border:none;color:#fff;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;display:none">🗑</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:4px 16px 16px">
+        <div id="empAv" style="width:58px;height:58px;border-radius:16px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:900;color:#fff;flex-shrink:0">?</div>
+        <div style="flex:1;min-width:0">
+          <div id="empName" style="font-size:19px;font-weight:900;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+          <div id="empDesig" style="font-size:12px;color:rgba(255,255,255,.75);margin-top:3px">—</div>
+          <div id="empBadges" style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+      <div id="empTabs" style="display:flex;overflow-x:auto;padding:0 6px;-webkit-overflow-scrolling:touch">
+        <button class="emp-tab on" data-t="overview"    onclick="empTabClick(this)">Overview</button>
+        <button class="emp-tab"    data-t="personal"    onclick="empTabClick(this)">Personal</button>
+        <button class="emp-tab"    data-t="work"        onclick="empTabClick(this)">Work</button>
+        <button class="emp-tab"    data-t="attendance"  onclick="empTabClick(this)">Attendance</button>
+        <button class="emp-tab"    data-t="leaves"      onclick="empTabClick(this)">Leaves</button>
+        <button class="emp-tab"    data-t="tasks"       onclick="empTabClick(this)">Tasks</button>
+        <button class="emp-tab"    data-t="salary"      onclick="empTabClick(this)">Salary</button>
+      </div>
+    </div>
+    <div id="empBody" style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch">
+      <div style="padding:30px;text-align:center;color:#9ca3af">Select an employee to view profile</div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit profile sheet -->
+<div class="sheet-overlay" id="editEmpOvl" onclick="closeSheet('editEmpSht','editEmpOvl')"></div>
+<div class="sheet" id="editEmpSht" style="max-height:92vh">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><div class="sheet-title">✏ Edit Employee Profile</div></div>
+  <div class="sheet-body" style="overflow-y:auto">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field" style="grid-column:1/-1"><label>Full Name</label><input id="ef_name" type="text"></div>
+      <div class="field"><label>Email</label><input id="ef_email" type="email"></div>
+      <div class="field"><label>Mobile</label><input id="ef_mobile" type="tel"></div>
+      <div class="field"><label>Designation</label><input id="ef_designation" type="text"></div>
+      <div class="field"><label>Qualification</label>
+        <select id="ef_qualification" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px">
+          <option value="">—</option><option>CA</option><option>CS</option><option>CMA</option><option>B.Com</option><option>MBA</option><option>Others</option>
+        </select></div>
+      <div class="field"><label>Branch</label><input id="ef_branch" type="text"></div>
+      <div class="field"><label>Date of Birth</label><input id="ef_dob" type="date"></div>
+      <div class="field"><label>Blood Group</label>
+        <select id="ef_bloodGroup" style="width:100%;height:44px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px">
+          <option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+        </select></div>
+      <div class="field"><label>Anniversary</label><input id="ef_anniversary" type="date"></div>
+      <div class="field"><label>Joining Date</label><input id="ef_joiningDate" type="date"></div>
+      <div class="field" style="grid-column:1/-1"><label>Address</label><textarea id="ef_address" rows="2"></textarea></div>
+      <div class="field"><label>PAN</label><input id="ef_pan" type="text" maxlength="10"></div>
+      <div class="field"><label>Aadhar</label><input id="ef_aadhar" type="text" maxlength="12"></div>
+    </div>
+    <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:14px 0 8px">Emergency Contact</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Name</label><input id="ef_emergencyName" type="text"></div>
+      <div class="field"><label>Phone</label><input id="ef_emergencyPhone" type="tel"></div>
+      <div class="field" style="grid-column:1/-1"><label>Relationship</label><input id="ef_emergencyRelation" type="text"></div>
+    </div>
+    <div id="ef_adminOnly">
+    <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:14px 0 8px">Login (Admin Only)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Username</label><input id="ef_username" type="text" autocomplete="off"></div>
+      <div class="field"><label>New Password</label><input id="ef_password" type="password" placeholder="Leave blank to keep" autocomplete="new-password"></div>
+    </div>
+    <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:14px 0 8px">Salary (Admin Only)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Basic Salary</label><input id="ef_basicSalary" type="number" min="0"></div>
+      <div class="field"><label>HRA</label><input id="ef_hra" type="number" min="0"></div>
+      <div class="field"><label>Conveyance</label><input id="ef_conveyance" type="number" min="0"></div>
+      <div class="field"><label>Other Allowance</label><input id="ef_otherAllowance" type="number" min="0"></div>
+      <div class="field"><label>Opening Leave (days)</label><input id="ef_openingLeave" type="number" step="0.5" min="0"></div>
+    </div>
+    </div>
+    <button class="btn btn-primary btn-full" style="margin-top:16px" onclick="saveEditProfile()">💾 Save Changes</button>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+</body>
+</html>

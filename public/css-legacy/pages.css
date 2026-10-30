@@ -1,0 +1,59 @@
+/* Stat grid */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+/* Combined billing overview — compact on desktop, stacked & scrollable on mobile */
+.cbov-filterbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;margin-bottom:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.cbov-field{min-width:0}
+.cbov-kpis{display:flex;gap:8px;flex-wrap:nowrap;overflow:hidden}
+.cbov-grid{display:grid;grid-template-columns:1fr 280px;gap:10px;align-items:start}
+.cbov-main{display:flex;flex-direction:column;gap:10px}
+.cbov-right{display:flex;flex-direction:column;gap:8px}
+.cbov-section{display:flex;gap:0;align-items:stretch}
+.cbov-tblbox{flex:0 0 auto;border-right:1px solid var(--border)}
+.cbov-chartbox{flex:1;min-width:0;display:flex;flex-direction:column;padding:8px 12px}
+.cbov-tbl{border-collapse:collapse;font-size:11px}
+.cbov-tbl td,.cbov-tbl th{white-space:nowrap;padding:4px 10px}
+.cbov-tbl th{font-size:10px}
+.cbov-tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.comp-tbl{min-width:0!important}
+.comp-tbl th,.comp-tbl td{min-width:42px}
+@media (max-width:768px){
+  .cbov-section{flex-direction:column}
+  .cbov-tblbox{flex:none;border-right:none;border-bottom:1px solid var(--border)}
+  .cbov-tbl{width:100%}
+  .cbov-tbl td,.cbov-tbl th{font-size:12px!important;padding:6px 8px!important}
+  .cbov-filterbar{grid-template-columns:1fr 1fr}
+  .cbov-kpis{flex-wrap:wrap}
+  .cbov-kpis>div{flex:1 1 46%!important;min-width:46%!important}
+  .cbov-grid{grid-template-columns:1fr!important}
+  .cbov-tbl{font-size:12px!important}
+  .cbov-tbl td,.cbov-tbl th{font-size:12px!important;padding:6px 6px!important}
+  .cbov-mlabel{font-size:12px!important}
+  .cbov-chart{height:150px!important}
+}
+
+/* Client Cards */
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gtbl{transition:box-shadow .2s}
+.gtbl tbody tr{transition:background .15s,transform .12s}
+.gtbl tbody tr:hover{background:#eef4ff!important}
+.gtbl td{transition:background .15s}
+.client-card{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border)}
+.client-name{font-size:15px;font-weight:800;color:var(--text)}
+.client-type{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.client-info{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7}
+
+/* Workload bar */
+.wl-item{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.wl-name{font-size:13px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wl-count{font-size:12px;color:var(--muted);font-weight:600;flex-shrink:0}
+
+/* Recurring */
+.rec-card{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);margin-bottom:10px;border-left:4px solid #6366f1}
+
+/* Performance */
+.perf-card{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);margin-bottom:12px}
+.perf-pct{font-size:36px;font-weight:900;line-height:1}
+.perf-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:12px 0}
+.perf-stat{text-align:center}
+.perf-stat-val{font-size:20px;font-weight:900}
+.perf-stat-label{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase}

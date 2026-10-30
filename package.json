@@ -1,0 +1,24 @@
+{
+  "name": "garp-tracker",
+  "version": "1.0.0",
+  "description": "GARP & Associates HRMS & Assignment Tracker",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^17.4.2",
+    "express": "^4.22.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.2.0",
+    "nodemailer": "^6.10.1",
+    "pdf-parse": "^1.1.1",
+    "resend": "^6.17.2",
+    "web-push": "^3.6.7",
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
